@@ -1,0 +1,179 @@
+﻿@page "/PubSubTopic/{Id}"
+@using MQTTnet.Client;
+@using MQTTnet;
+@using MqttMauiApp.Model
+@*<h3>@mqttClientModel.ClientName</h3>*@
+<br/>
+<div>
+    @if (IsConnected)
+    {
+        <button class="btn btn-success">Connected</button>
+    }
+    else
+    {
+        <button class="btn btn-danger">Offline</button>
+    }
+    <button style="margin-left:100px;" class="btn btn-primary" @onclick="AddPublisher">Add Publisher</button>
+    <button class="btn btn-warning" @onclick="AddSubscriber">Add Subscriber</button>
+</div>
+<EditForm Model="MyModel">
+    <div class="row">
+        @foreach (var item in MyModel.PublisherSubscribers)
+        {
+            if (item.topicType == TopicType.Publisher)
+            {
+                <div class="col-lg-3 col-md-3 col-sm-4">
+                    <div class="card overflow-auto" style="margin-top:10px;height:450px;">
+                        <div class="card-body">
+                            <div>Topic Name</div>
+                            <div><input type="text" class="form-control" @bind-value="item.TopicName" placeholder="Name" required></div>
+                            <div>Qos</div>
+                            <div>
+                                <InputSelect @bind-Value="item.QosType">
+
+                                    @foreach (var qos in Enum.GetValues(typeof(Qos)))
+                                    {
+                                        int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
+                                        <option value="@qos">@index - @qos Once</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div>PayLoad</div>
+                            <div><input type="text" class="form-control" @bind-value="item.PublishMessage" required></div>
+                            <div style="margin-top:10px;">  <button type="button" class="btn btn-primary" @onclick="()=>PublishMessage(item)">Publish</button> </div>
+                            @foreach (var msg in item.SentMessages)
+                            {
+                                <div class="card" style="margin-top:10px;">
+                                    <div class="card-header">@msg</div>
+                                    <div class="card-body" style="padding-top:0px; padding-bottom:0px">Topic : @item.TopicName</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col-lg-3 col-md-3 col-sm-4">
+                    <div class="card overflow-auto" style="margin-top:10px; height:450px;">
+                        <div class="card-body">
+                            <div>Topic Name</div>
+                            <div><input type="text" class="form-control" @bind-value="item.TopicName" placeholder="Name" required></div>
+                            @if (item.IsSubscribed)
+                            {
+                                <div style="margin-top:10px;width:100%;"> <button type="button" class="btn btn-warning" @onclick="()=>UnSubscribeTopic(item)">UnSubScribe</button> </div>
+                            }
+                            else
+                            {
+                                <div>Qos</div>
+                                <div>
+                                    <InputSelect @bind-Value="item.QosType">
+
+                                        @foreach (var qos in Enum.GetValues(typeof(Qos)))
+                                        {
+                                            int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
+                                            <option value="@qos">@index - @qos Once</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                                <div style="margin-top:10px;"> <button type="button" class="btn btn-warning" @onclick="()=>SubscribeTopic(item.Id,item.TopicName,item.QosType)">SubScribe</button> </div>
+                            }
+
+                            @foreach (var msg in item.RecievedMessages)
+                            {
+                                <div class="card" style="margin-top:10px;">
+                                    <div class="card-header">Recieved : @System.Text.Encoding.UTF8.GetString(msg.Payload)</div>
+                                    <div class="card-body" style="padding-top:0px; padding-bottom:0px">Topic : @item.TopicName</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+</EditForm>
+
+@code {
+    private bool IsConnected = false;
+    public class SomeModel
+    {
+        public List<PublisherSubscriber> PublisherSubscribers { get; set; } = new List<PublisherSubscriber>();
+    }
+    [Parameter]
+    public string Id { get; set; }
+    private MqttClientModel mqttClientModel;
+    private SomeModel MyModel = new SomeModel();
+
+    private MqttConnector mqttConnector;
+    private IMqttClient mqttClient;
+
+    protected override async Task OnInitializedAsync()
+    {
+        mqttClientModel = MqttClientModel.mqttClients.Where(m => m.ClientId == Id).FirstOrDefault();
+        mqttConnector = new MqttConnector(mqttClientModel);
+
+        while (!(mqttClient = mqttConnector.Connect(mqttClientModel)).IsConnected)
+        {
+
+
+        }
+        IsConnected = mqttClient.IsConnected;
+
+
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<string>() });
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 2, ClientId = mqttClientModel.ClientId, IsSubscribed = false, topicType = TopicType.Subscriber, RecievedMessages = new List<MqttApplicationMessage>() });
+        mqttClient.ApplicationMessageReceivedAsync += async e =>
+          {
+              MyModel.PublisherSubscribers.Where(ps => ps.TopicName == e.ApplicationMessage.Topic &&
+                   ps.IsSubscribed == true
+              //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
+              ).ToList().
+                   ForEach(ch => ch.RecievedMessages.Add(e.ApplicationMessage));
+              await InvokeAsync(() =>
+              {
+                  StateHasChanged();
+              });
+          };
+        mqttClient.DisconnectedAsync += async e =>
+          {
+              IsConnected = mqttClient.IsConnected;
+              await InvokeAsync(() =>
+             {
+                 StateHasChanged();
+             });
+          };
+        StateHasChanged();
+    }
+    private void AddPublisher()
+    {
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<string>() });
+        StateHasChanged();
+    }
+    private void AddSubscriber()
+    {
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, IsSubscribed = false, ClientId = mqttClientModel.ClientId, topicType = TopicType.Subscriber, RecievedMessages = new List<MqttApplicationMessage>() });
+        StateHasChanged();
+    }
+    private void PublishMessage(PublisherSubscriber publisher)
+    {
+        if (publisher.TopicName != null && publisher.PublishMessage != null)
+        {
+            mqttConnector.PublishTopic(publisher.TopicName, publisher.PublishMessage, publisher.QosType);
+            MyModel.PublisherSubscribers.Where(ps => ps.Id == publisher.Id).ToList().ForEach(ch => ch.SentMessages.Add("Sent : " + publisher.PublishMessage));
+        }
+
+    }
+    private void UnSubscribeTopic(PublisherSubscriber subscriber)
+    {
+        MyModel.PublisherSubscribers.Where(ps => ps.Id == subscriber.Id).ToList().ForEach(ch => ch.IsSubscribed = false);
+        StateHasChanged();
+    }
+    private void SubscribeTopic(int id, string topicname, Qos qos)
+    {
+        MyModel.PublisherSubscribers.Where(ps => ps.Id == id).ToList().ForEach(ch => ch.IsSubscribed = true);
+        var flag = mqttConnector.Subscribe(topicname, qos);
+        StateHasChanged();
+    }
+}

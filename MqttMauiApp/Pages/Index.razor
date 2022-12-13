@@ -1,0 +1,30 @@
+﻿@page "/"
+@using MqttMauiApp.Model
+@inject NavigationManager NavManager
+
+<div class="row">
+    @foreach (var client in mqttClientModels)
+    {
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <div class="card" style="margin-top:10px;" @onclick="() => ClientSelect(client)">
+                <div class="card-header text-center">
+                    <h5 class="card-title">@client.ClientName</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">@client.Host</p>
+                    <div>User : @client.UserName</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+
+@code {
+    List<MqttClientModel> mqttClientModels = MqttClientModel.mqttClients;
+    private void ClientSelect(MqttClientModel client)
+    {
+        NavManager.NavigateTo($"/PubSubTopic/{client.ClientId}");
+    }
+}
