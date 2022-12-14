@@ -1,0 +1,125 @@
+﻿@page "/createClient/{Id}"
+@inject NavigationManager NavManager
+@using Newtonsoft.Json;
+
+<br />
+<EditForm Model="mqttClientModel" OnSubmit="HandleValidSubmit">
+    <div class="container h-100">
+        <div class="row h-100 justify-content-center align-items-center" style="position:relative;">
+            <div class="card card-block col-md-8 col-lg-6 col-sm-12 shadow-lg p-4">
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Client Name</label>
+                        </div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" @bind-value="mqttClientModel.ClientName" placeholder="Name" required>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Protocol</label>
+                        </div>
+                        <div class="col-9">
+                            <InputSelect class="form-control" @bind-Value="mqttClientModel.Type">
+
+                                @foreach (var ptype in Enum.GetValues(typeof(ProtocolType)))
+                                {
+                                    <option value="@ptype">@ptype</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Host</label>
+                        </div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" @bind-value="mqttClientModel.Host" placeholder="Host" required>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Port</label>
+                        </div>
+                        <div class="col-9">
+                            <input type="number" class="form-control" @bind-value="mqttClientModel.Port" placeholder="Port" required>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Username</label>
+                        </div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" @bind-value="mqttClientModel.UserName" placeholder="UserName" required>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Password</label>
+                        </div>
+                        <div class="col-9">
+                            <input type="text" class="form-control" @bind-value="mqttClientModel.Password" placeholder="Password" required>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-3">
+                            <label>Will - Qos</label>
+                        </div>
+                        <div class="col-9">
+                            <InputSelect class="form-control" @bind-Value="mqttClientModel.QosType">
+
+                                @foreach (var qos in Enum.GetValues(typeof(Qos)))
+                                {
+                                    int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
+                                    <option value="@qos">@index - @qos Once</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary" data-save="modal">Save</button>
+                    <button type="button" class="btn btn-secondary" @onclick="()=>Cancel()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private MqttClientModel mqttClientModel = new MqttClientModel();
+    protected override async Task OnInitializedAsync(){
+        if (Id != null)
+        {
+            mqttClientModel = MqttClientModel.mqttClients.Where(m => m.ClientId == Id).FirstOrDefault();
+        }
+        StateHasChanged();
+    }
+    protected async Task HandleValidSubmit()
+    {
+        if (Id != null)
+        {
+            var removeold = MqttClientModel.mqttClients.Where(s => s.ClientId == Id).FirstOrDefault();
+            MqttClientModel.mqttClients.Remove(removeold);
+        }
+        else{
+            mqttClientModel.ClientId = "EMQX_" + Guid.NewGuid().ToString();
+        }
+        MqttClientModel.mqttClients.Add(mqttClientModel);
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+        if (File.Exists($@"{mainDir}\wwwroot\client.json")){
+            File.Delete($@"{mainDir}\wwwroot\client.json");
+        }
+        File.WriteAllText($@"{mainDir}\wwwroot\client.json", json);
+        NavManager.NavigateTo("/");
+    }
+    private void Cancel()
+    {
+        NavManager.NavigateTo("/");
+    }
+}

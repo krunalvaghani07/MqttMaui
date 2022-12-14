@@ -5,6 +5,7 @@ using MQTTnet.Packets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,28 +25,25 @@ namespace MqttMauiApp
         {
             try
             {
+                string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 var factory = new MqttFactory();
                 _client = factory.CreateMqttClient();
                 switch (mqttClientModel.Type)
                 {
-                    case "tcp":
-                        _options = TcpMqttClientOptions("broker.emqx.io");
-                        Console.WriteLine("tcp connection");
+                    case ProtocolType.mqtt_tcp:
+                        _options = TcpMqttClientOptions(mqttClientModel);
                         break;
-                    case "tls":
-                        _options = TlsMqttClientOptions("broker.emqx.io", @"D:\Krunal\MqttBoxWPF\MqttBoxWPF\broker.emqx.io-ca.crt");
-                        Console.WriteLine("tls connection");
+                    case ProtocolType.mqtt_tls:
+                        _options = TlsMqttClientOptions(mqttClientModel, $@"{path}\wwwroot\broker.emqx.io-ca.crt");
                         break;
-                    case "ws":
-                        _options = WsMqttClientOptions("broker.emqx.io:8083/mqtt");
-                        Console.WriteLine("ws connection");
+                    case ProtocolType.ws:
+                        _options = WsMqttClientOptions(mqttClientModel);
                         break;
-                    case "wss":
+                    case ProtocolType.wss:
                         _options = WssMqttClientOptions(
-                            "broker.emqx.io:8084/mqtt",
-                            @"D:\Krunal\MqttBoxWPF\MqttBoxWPF\broker.emqx.io-ca.crt"
+                           mqttClientModel,
+                            $@"{path}\wwwroot\broker.emqx.io-ca.crt"
                         );
-                        Console.WriteLine("wss connection");
                         break;
                 }
                 //_options = new MqttClientOptionsBuilder()
@@ -147,24 +145,24 @@ namespace MqttMauiApp
             }
         }
 
-        private static MqttClientOptions TcpMqttClientOptions(string url)
+        private static MqttClientOptions TcpMqttClientOptions(MqttClientModel mqttClientModel)
         {
             return new MqttClientOptionsBuilder()
-                        .WithClientId("EMQX_" + Guid.NewGuid().ToString())
-                        .WithTcpServer(url)
+                        .WithClientId(mqttClientModel.ClientId)
+                        .WithTcpServer(mqttClientModel.Host)
                         .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-                        //.WithCredentials("user", "pass")
+                        .WithCredentials(mqttClientModel.UserName, mqttClientModel.Password)
                         .WithCleanSession()
                         .Build();
         }
 
-        private static MqttClientOptions TlsMqttClientOptions(string url, string caFile)
+        private static MqttClientOptions TlsMqttClientOptions(MqttClientModel mqttClientModel, string caFile)
         {
             return new MqttClientOptionsBuilder()
-                        .WithClientId("EMQX_" + Guid.NewGuid().ToString())
-                        .WithTcpServer(url)
+                        .WithClientId(mqttClientModel.ClientId)
+                        .WithTcpServer(mqttClientModel.Host)
                          .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-                        //.WithCredentials("user", "pass")
+                         .WithCredentials(mqttClientModel.UserName, mqttClientModel.Password)
                         .WithCleanSession()
                         .WithTls(
                             new MqttClientOptionsBuilderTlsParameters()
@@ -181,24 +179,24 @@ namespace MqttMauiApp
                         .Build();
         }
 
-        private static MqttClientOptions WsMqttClientOptions(string url)
+        private static MqttClientOptions WsMqttClientOptions(MqttClientModel mqttClientModel)
         {
             return new MqttClientOptionsBuilder()
-                        .WithClientId("EMQX_" + Guid.NewGuid().ToString())
-                        .WithWebSocketServer(url)
+                        .WithClientId(mqttClientModel.ClientId)
+                        .WithWebSocketServer(mqttClientModel.Host)
                          .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-                        //.WithCredentials("user", "pass")
+                         .WithCredentials(mqttClientModel.UserName, mqttClientModel.Password)
                         .WithCleanSession()
                         .Build();
         }
 
-        private static MqttClientOptions WssMqttClientOptions(string url, string caFile)
+        private static MqttClientOptions WssMqttClientOptions(MqttClientModel mqttClientModel, string caFile)
         {
             return new MqttClientOptionsBuilder()
-                        .WithClientId("EMQX_" + Guid.NewGuid().ToString())
-                        .WithWebSocketServer(url)
+                         .WithClientId(mqttClientModel.ClientId)
+                        .WithWebSocketServer(mqttClientModel.Host)
                          .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-                        //.WithCredentials("user", "pass")
+                         .WithCredentials(mqttClientModel.UserName, mqttClientModel.Password)
                         .WithCleanSession()
                         .WithTls(
                             new MqttClientOptionsBuilderTlsParameters()

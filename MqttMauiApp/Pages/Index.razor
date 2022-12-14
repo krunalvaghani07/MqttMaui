@@ -1,16 +1,24 @@
 ﻿@page "/"
 @using MqttMauiApp.Model
 @inject NavigationManager NavManager
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+@using Microsoft.AspNetCore.Hosting;
+@using Newtonsoft.Json;
 
+<br/>
+<button class="btn btn-primary" @onclick="CreateClient">CreateClient</button>
 <div class="row">
     @foreach (var client in mqttClientModels)
     {
         <div class="col-lg-3 col-md-4 col-sm-6">
-            <div class="card" style="margin-top:10px;" @onclick="() => ClientSelect(client)">
-                <div class="card-header text-center">
-                    <h5 class="card-title">@client.ClientName</h5>
+            <div class="card" style="margin-top:10px;">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        @client.ClientName <button class="btn btn-danger text-right" style="float:right;" @onclick="() => Delete(client)">Delete</button></h5>
+                    
                 </div>
-                <div class="card-body">
+            <div class="card-body" @onclick="() => ClientSelect(client)">
                     <p class="card-text">@client.Host</p>
                     <div>User : @client.UserName</div>
                 </div>
@@ -18,13 +26,41 @@
         </div>
     }
 </div>
-
+<br/>
 
 
 @code {
-    List<MqttClientModel> mqttClientModels = MqttClientModel.mqttClients;
+    List<MqttClientModel> mqttClientModels = new List<MqttClientModel>();
+    protected override async Task OnInitializedAsync()
+    {
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+        { 
+            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            mqttClientModels = MqttClientModel.mqttClients;
+        }
+        StateHasChanged();
+    }
+
     private void ClientSelect(MqttClientModel client)
     {
         NavManager.NavigateTo($"/PubSubTopic/{client.ClientId}");
+    }
+    private void Delete(MqttClientModel client)
+    {
+        MqttClientModel.mqttClients.Remove(client);
+        mqttClientModels = MqttClientModel.mqttClients;
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+        {
+            File.Delete($@"{mainDir}\wwwroot\client.json");
+        }
+        File.WriteAllText($@"{mainDir}\wwwroot\client.json", json);
+        StateHasChanged();
+    }
+    private void CreateClient(){
+        NavManager.NavigateTo($"/createClient");
     }
 }
