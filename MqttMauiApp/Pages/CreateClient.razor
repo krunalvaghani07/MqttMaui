@@ -90,7 +90,7 @@
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public string? Id { get; set; }
     private MqttClientModel mqttClientModel = new MqttClientModel();
     protected override async Task OnInitializedAsync(){
         if (Id != null)

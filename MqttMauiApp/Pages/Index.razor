@@ -6,51 +6,112 @@
 @using Microsoft.AspNetCore.Hosting;
 @using Newtonsoft.Json;
 
-<br/>
-<button class="btn btn-primary" @onclick="CreateClient">CreateClient</button>
+<br />
+<div>
+    <button class="btn btn-primary" @onclick="CreateClient"><span class="fa fa-plus"></span> CreateClient</button>
+    <button class="btn btn-success" @onclick="CreateClient"><span class="fa fa-sign-in"></span> ImportClient</button>
+    <button class="btn btn-secondary" @onclick="CreateClient"><span class="fa fa-print"></span> ExportClient</button>
+    <h4 style="margin-top:10px;">Configuration File : @ConfigFilePath</h4>
+</div>
 <div class="row">
-    @foreach (var client in mqttClientModels)
+    @foreach (var client in mqttClientConnector)
     {
         <div class="col-lg-3 col-md-4 col-sm-6">
             <div class="card" style="margin-top:10px;">
-                <div class="card-header">
-                    <h5 class="card-title">
-                        @client.ClientName <button class="btn btn-danger text-right" style="float:right;" @onclick="() => Delete(client)">Delete</button></h5>
-                    
-                </div>
-            <div class="card-body" @onclick="() => ClientSelect(client)">
-                    <p class="card-text">@client.Host</p>
-                    <div>User : @client.UserName</div>
+                @if (client.IsConnected)
+                {
+                    <div class="card-header" style="background-color:green">
+                        <h5 class="card-title">
+                            @client.MqttClientModel.ClientName
+                            <button title="Delete" class="btn btn-link text-dark" style="float:right;" @onclick="() => Delete(client.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></button>
+                            <button title="Disconnect" class="btn btn-link text-dark" style="float:right;" @onclick="() =>  Disconnect(client)"><span class="fa fa-power-off fa-lg"></span></button>
+                        </h5>
+                    </div>
+                }
+                else
+                {
+                    <div class="card-header" style="background-color:red">
+                        <h5 class="card-title">
+                            @client.MqttClientModel.ClientName
+                            <button title="Delete" class="btn btn-link text-dark" style="float:right;" @onclick="() => Delete(client.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></button>
+                            <button title="Disconnect" class="btn btn-link text-dark" style="float:right;" @onclick="() => Connect(client)"><span class="fa fa-refresh fa-lg"></span></button>
+                        </h5>
+                    </div>
+                }
+                <div class="card-body" @onclick="() => ClientSelect(client)">
+                    <p class="card-text">@client.MqttClientModel.Host</p>
+                    <div>User : @client.MqttClientModel.UserName</div>
                 </div>
             </div>
         </div>
     }
 </div>
-<br/>
+<br />
 
 
 @code {
-    List<MqttClientModel> mqttClientModels = new List<MqttClientModel>();
+    List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
+    string ConfigFilePath;
     protected override async Task OnInitializedAsync()
     {
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
-        { 
-            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
-            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
-            mqttClientModels = MqttClientModel.mqttClients;
-        }
+        LoadClients();
         StateHasChanged();
     }
-
-    private void ClientSelect(MqttClientModel client)
+    private void LoadClients()
     {
-        NavManager.NavigateTo($"/PubSubTopic/{client.ClientId}");
+        mqttClientConnector.Clear();
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+        {
+            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            //mqttClientModels = MqttClientModel.mqttClients;
+        }
+        if (MqttClientModel.mqttClients.Count > 0)
+        {
+            foreach (var clientmodel in MqttClientModel.mqttClients)
+            {
+                var mqttconnector = new MqttConnector(clientmodel);
+                var client = mqttconnector.Connect(clientmodel);
+                mqttClientConnector.Add(new MqttModelConnection() { MqttConnector = mqttconnector, Client = client, MqttClientModel = clientmodel, IsConnected = false });
+                client.ConnectedAsync += async e =>
+                {
+                    mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now; });
+                    await InvokeAsync(() =>
+                    {
+                        StateHasChanged();
+                    });
+                };
+                client.DisconnectedAsync += async e =>
+               {
+                   mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; });
+                   await InvokeAsync(() =>
+                   {
+                       StateHasChanged();
+                   });
+               };
+                mqttconnector.StartConnecting();
+            }
+        }
+    }
+    private void Disconnect(MqttModelConnection mqttModelConnection)
+    {
+        mqttModelConnection.MqttConnector.Disconnect();
+        StateHasChanged();
+    }
+    private void Connect(MqttModelConnection mqttModelConnection)
+    {
+        mqttModelConnection.MqttConnector.StartConnecting();
+        StateHasChanged();
+    }
+    private void ClientSelect(MqttModelConnection client)
+    {
+        NavManager.NavigateTo($"/PubSubTopic/{client.MqttClientModel.ClientId}");
     }
     private void Delete(MqttClientModel client)
     {
         MqttClientModel.mqttClients.Remove(client);
-        mqttClientModels = MqttClientModel.mqttClients;
         string mainDir = AppDomain.CurrentDomain.BaseDirectory;
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
         if (File.Exists($@"{mainDir}\wwwroot\client.json"))
@@ -58,9 +119,11 @@
             File.Delete($@"{mainDir}\wwwroot\client.json");
         }
         File.WriteAllText($@"{mainDir}\wwwroot\client.json", json);
+        mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         StateHasChanged();
     }
-    private void CreateClient(){
+    private void CreateClient()
+    {
         string param = null;
         NavManager.NavigateTo($"/createClient");
     }

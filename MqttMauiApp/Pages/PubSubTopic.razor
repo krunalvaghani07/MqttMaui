@@ -115,14 +115,16 @@
     {
         mqttClientModel = MqttClientModel.mqttClients.Where(m => m.ClientId == Id).FirstOrDefault();
         mqttConnector = new MqttConnector(mqttClientModel);
-
-        while (!(mqttClient = mqttConnector.Connect(mqttClientModel)).IsConnected)
-        {
-
-
-        }
-        IsConnected = mqttClient.IsConnected;
-
+        mqttClient = mqttConnector.Connect(mqttClientModel);
+        mqttClient.ConnectedAsync += async e =>
+               {
+                   IsConnected = mqttClient.IsConnected;
+                   await InvokeAsync(() =>
+                   {
+                       StateHasChanged();
+                   });
+               };
+        mqttConnector.StartConnecting();
 
         MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<string>() });
         MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 2, ClientId = mqttClientModel.ClientId, IsSubscribed = false, topicType = TopicType.Subscriber, RecievedMessages = new List<MqttApplicationMessage>() });

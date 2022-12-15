@@ -16,17 +16,46 @@ namespace MqttMauiApp
     {
         public static IMqttClient _client;
         public static MqttClientOptions _options;
-        private readonly MqttClientModel mqtt; 
+        private readonly MqttClientModel mqtt;
+        private MqttFactory factory;
+        public Thread ConnectionThread;
+
         public MqttConnector(MqttClientModel mqttClient)
         {
             mqtt = mqttClient;
         }
-       public IMqttClient Connect(MqttClientModel mqttClientModel)
+        public void StartConnecting()
+        {
+            try
+            {
+                ConnectionThread = new Thread(new ThreadStart(this.ConnectMqttClient));
+                ConnectionThread.Start();
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
+        public void ConnectMqttClient()
+        {
+            try
+            {
+                while (!_client.IsConnected)
+                {
+                    _client.ConnectAsync(_options).Wait();
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+        public IMqttClient Connect(MqttClientModel mqttClientModel)
         {
             try
             {
                 string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                var factory = new MqttFactory();
+                 factory = new MqttFactory();
                 _client = factory.CreateMqttClient();
                 switch (mqttClientModel.Type)
                 {
@@ -46,15 +75,6 @@ namespace MqttMauiApp
                         );
                         break;
                 }
-                //_options = new MqttClientOptionsBuilder()
-                //    //.WithClientId(mqttClientModel.ClientId)
-                //    .WithTcpServer(mqttClientModel.Host)
-                //    .WithProtocolVersion(MQTTnet.Formatter.MqttProtocolVersion.V500)
-                //    //.WithCredentials(username: mqttClientModel.UserName, password: mqttClientModel.Password)
-                //    .WithCleanSession()
-                //    .Build();
-
-                _client.ConnectAsync(_options).Wait();
               return  _client;
 
             }
@@ -62,6 +82,19 @@ namespace MqttMauiApp
             {
                 Console.WriteLine("Error");
                 return _client;
+            }
+        }
+        public void Disconnect()
+        {
+            try
+            {
+                var mqttClientDisconnectOptions = factory.CreateClientDisconnectOptionsBuilder().Build();
+                 _client.DisconnectAsync(mqttClientDisconnectOptions, CancellationToken.None);
+              // _client.Dispose();
+            }
+           catch(Exception ex)
+            {
+
             }
         }
         public void PublishTopic(string topicname,string message,Qos qos)
