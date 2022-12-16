@@ -110,12 +110,11 @@
             mqttClientModel.ClientId = "EMQX_" + Guid.NewGuid().ToString();
         }
         MqttClientModel.mqttClients.Add(mqttClientModel);
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists($@"{mainDir}\wwwroot\client.json")){
-            File.Delete($@"{mainDir}\wwwroot\client.json");
+        if (File.Exists(MqttClientModel.ConfigPath)){
+            File.Delete(MqttClientModel.ConfigPath);
         }
-        File.WriteAllText($@"{mainDir}\wwwroot\client.json", json);
+        File.WriteAllText(MqttClientModel.ConfigPath, json);
         NavManager.NavigateTo("/");
     }
     private void Cancel()

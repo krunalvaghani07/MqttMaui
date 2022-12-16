@@ -66,9 +66,9 @@
     }
 
     private void ConnectToMqtt(){
+        mqttClientConnector.Clear();
         if (MqttClientModel.mqttClients.Count > 0)
         {
-            mqttClientConnector.Clear();
             foreach (var clientmodel in MqttClientModel.mqttClients)
             {
                 var mqttconnector = new MqttConnector(clientmodel);
@@ -117,6 +117,13 @@
             ConfigFilePath = result.FullPath;
             MqttClientModel.ConfigPath = ConfigFilePath;
             ConnectToMqtt();
+            string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+            string configpathsave = $@"{mainDir}\wwwroot\clientconfig.txt";
+            if (File.Exists(configpathsave))
+            {
+                File.Delete(configpathsave);
+            }
+            File.WriteAllText(configpathsave, MqttClientModel.ConfigPath);
             StateHasChanged();
         }
     }
@@ -124,14 +131,29 @@
     private void LoadClients()
     {
         string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-        ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
-        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
-        {
-            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
-            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
-            //mqttClientModels = MqttClientModel.mqttClients;
+        if (File.Exists($@"{mainDir}\wwwroot\clientconfig.txt")){
+            var path = File.ReadAllText($@"{mainDir}\wwwroot\clientconfig.txt");
+            if (File.Exists(path))
+            {
+                ConfigFilePath = path;
+                var data = File.ReadAllText(ConfigFilePath);
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            }
+            else{
+                ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+                var data = File.ReadAllText(ConfigFilePath);
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            }
+        }else{
+            ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+            if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+            {
+                var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+                //mqttClientModels = MqttClientModel.mqttClients;
+            }
         }
-
+        MqttClientModel.ConfigPath = ConfigFilePath;
     }
 
     private void Disconnect(MqttModelConnection mqttModelConnection)
@@ -154,13 +176,12 @@
     private void Delete(MqttClientModel client)
     {
         MqttClientModel.mqttClients.Remove(client);
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+        if (File.Exists(ConfigFilePath))
         {
-            File.Delete($@"{mainDir}\wwwroot\client.json");
+            File.Delete(ConfigFilePath);
         }
-        File.WriteAllText($@"{mainDir}\wwwroot\client.json", json);
+        File.WriteAllText(ConfigFilePath, json);
         mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         StateHasChanged();
     }
