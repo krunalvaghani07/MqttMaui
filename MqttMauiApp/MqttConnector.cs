@@ -12,13 +12,28 @@ using System.Threading.Tasks;
 
 namespace MqttMauiApp
 {
+    public delegate void IsConnectedHandler(bool isConnected, MqttConnector mqttConnector);
     public class MqttConnector
     {
-        public static IMqttClient _client;
-        public static MqttClientOptions _options;
+        public  IMqttClient _client;
+        public  MqttClientOptions _options;
         private readonly MqttClientModel mqtt;
         private MqttFactory factory;
         public Thread ConnectionThread;
+        public event IsConnectedHandler isConnectedHandler;
+        public bool ConnectionFlag;
+
+        public void Action(bool connection)
+        {
+            if (isConnectedHandler != null)
+            {
+                isConnectedHandler(connection,this);
+            }
+            else
+            {
+                Console.WriteLine("Not Registered");
+            }
+        }
 
         public MqttConnector(MqttClientModel mqttClient)
         {
@@ -40,7 +55,7 @@ namespace MqttMauiApp
         {
             try
             {
-                while (!_client.IsConnected)
+                while (!ConnectionFlag)
                 {
                     _client.ConnectAsync(_options).Wait();
                 }
@@ -54,6 +69,7 @@ namespace MqttMauiApp
         {
             try
             {
+                ConnectionFlag = false;
                 string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                  factory = new MqttFactory();
                 _client = factory.CreateMqttClient();
@@ -75,7 +91,19 @@ namespace MqttMauiApp
                         );
                         break;
                 }
-              return  _client;
+                _client.ConnectedAsync +=  e =>
+                {
+                    ConnectionFlag = true;
+                    this.Action(true);
+                    return Task.CompletedTask;
+                };
+                _client.DisconnectedAsync += e =>
+                {
+                    ConnectionFlag = false;
+                    this.Action(false);
+                    return Task.CompletedTask;
+                };
+                return  _client;
 
             }
             catch(Exception ex)

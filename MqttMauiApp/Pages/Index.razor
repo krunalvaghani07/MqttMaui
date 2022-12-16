@@ -74,24 +74,34 @@
             {
                 var mqttconnector = new MqttConnector(clientmodel);
                 var client = mqttconnector.Connect(clientmodel);
-                mqttClientConnector.Add(new MqttModelConnection() { MqttConnector = mqttconnector, Client = client, MqttClientModel = clientmodel, IsConnected = false });
-                client.ConnectedAsync += async e =>
+                // client.ConnectedAsync += async e =>
+                // {
+                //     await InvokeAsync(() =>
+                //     {
+                //         StateHasChanged();
+                //     });
+                // };
+                // client.DisconnectedAsync += async e =>
+                //{
+
+                //};
+                mqttconnector.StartConnecting();
+                Thread.Sleep(10);
+                mqttClientConnector.Add(new MqttModelConnection() { MqttClientModel = clientmodel, IsConnected = false });
+                mqttconnector.isConnectedHandler += async (e,q) =>
                 {
-                    mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now; });
+                    if(e){
+                        mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now;ch.MqttConnector = q; });
+                    }
+                    else{
+                        mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; ch.MqttConnector = q; });
+                    }
                     await InvokeAsync(() =>
-                    {
-                        StateHasChanged();
-                    });
-                };
-                client.DisconnectedAsync += async e =>
-               {
-                   mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; });
-                   await InvokeAsync(() =>
                    {
                        StateHasChanged();
                    });
-               };
-                mqttconnector.StartConnecting();
+                };
+         
             }
         }
     }

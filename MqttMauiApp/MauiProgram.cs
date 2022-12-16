@@ -16,11 +16,13 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+		
 		#if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 #endif
 		
 		builder.Services.AddSingleton<WeatherForecastService>();
+        builder.Services.AddSingleton<MqttConnector>();
 
 		return builder.Build();
 	}
