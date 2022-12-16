@@ -23,6 +23,7 @@ namespace MqttMauiApp.Model
                 //new MqttClientModel() {Type= ProtocolType.ws, Port=8083, ClientName = "WsClient",ClientId="2",Host="broker.emqx.io:8083/mqtt",UserName="krunal",Password="vaghani" },
                 //new MqttClientModel() {Type= ProtocolType.wss, Port=8083, ClientName = "WssClient",ClientId="2",Host="broker.emqx.io:8083/mqtt",UserName="krunal",Password="vaghani" }
                                                     };
+        public static string ConfigPath;
     }
     public enum ProtocolType
     {

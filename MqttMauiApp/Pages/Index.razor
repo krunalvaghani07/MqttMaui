@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Hosting;
 @using Newtonsoft.Json;
 @inject IJSRuntime JSRuntime
+@inject MqttMauiApp.Interfaces.IFolderPicker FolderPicker
 
 <br />
 <div>
@@ -114,6 +115,7 @@
             var stream = await result.OpenReadAsync();
             MqttClientModel.mqttClients = await System.Text.Json.JsonSerializer.DeserializeAsync<List<MqttClientModel>>(stream);
             ConfigFilePath = result.FullPath;
+            MqttClientModel.ConfigPath = ConfigFilePath;
             ConnectToMqtt();
             StateHasChanged();
         }
@@ -171,14 +173,25 @@
 
     private async void ExportJson(){
 
-        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        var stream = new MemoryStream();
-        var writer = new StreamWriter(stream);
-        writer.Write(json);
-        writer.Flush();
-        stream.Position = 0;
-        using var streamRef = new DotNetStreamReference(stream: stream);
+        var pickedFolder = await FolderPicker.PickFolder();
 
-        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", "config.json", streamRef);
+        if(pickedFolder == null){
+            return;
+        }
+        else{
+            string path = pickedFolder;
+            string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+            File.WriteAllText($@"{path}\client.json", json);
+
+            //var stream = new MemoryStream();
+            //var writer = new StreamWriter(stream);
+            //writer.Write(json);
+            //writer.Flush();
+            //stream.Position = 0;
+            //using var streamRef = new DotNetStreamReference(stream: stream);
+
+           // await JSRuntime.InvokeVoidAsync("downloadFileFromStream", $@"{pickedFolder}/config.json", streamRef);
+        }
+       
     }
 }
