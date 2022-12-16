@@ -14,8 +14,8 @@ namespace MqttMauiApp
 {
     public class MqttConnector
     {
-        public static IMqttClient _client;
-        public static MqttClientOptions _options;
+        public  IMqttClient _client;
+        public  MqttClientOptions _options;
         private readonly MqttClientModel mqtt;
         private MqttFactory factory;
         public Thread ConnectionThread;
