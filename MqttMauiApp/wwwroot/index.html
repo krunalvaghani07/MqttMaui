@@ -9,6 +9,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 	<link href="css/app.css" rel="stylesheet" />
 	<link href="MqttMauiApp.styles.css" rel="stylesheet" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 </head>
 
 <body>
@@ -24,7 +25,36 @@
 	</div>
 
 	<script src="_framework/blazor.webview.js" autostart="false"></script>
+	<script type="text/javascript">
+		function OpenFilePicker() {
 
+			$("#importConfig").trigger('click');
+		}
+		window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+			const arrayBuffer = await contentStreamReference.arrayBuffer();
+			const blob = new Blob([arrayBuffer]);
+			const url = URL.createObjectURL(blob);
+			const anchorElement = document.createElement('a');
+			anchorElement.href = url;
+			anchorElement.download = fileName ?? '';
+			anchorElement.click();
+			anchorElement.remove();
+			//URL.revokeObjectURL(url);
+		}
+        //window.attachFileUploadHandler = () => {
+        //    document.getElementById("importConfig").addEventListener("change", function (e) {
+
+        //        var files = [];
+        //        var filePath = $('#importConfig').val(); 
+        //        Array.from(e.target.files).forEach(file => {
+        //            files.push({ Name: file.name, Path: filePath });
+        //        });
+
+        //        //replcae BlazorApp1 with your application assembly name
+        //        DotNet.invokeMethodAsync('MqttMauiApp', 'GetSelectedFileDetails', files);
+        //    });
+        //};
+	</script>
 </body>
 
 </html>

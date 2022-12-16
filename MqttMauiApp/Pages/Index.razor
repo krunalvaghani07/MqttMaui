@@ -5,12 +5,15 @@
 @using System.Text.Json.Serialization;
 @using Microsoft.AspNetCore.Hosting;
 @using Newtonsoft.Json;
+@inject IJSRuntime JSRuntime
 
 <br />
 <div>
-    <button class="btn btn-primary" @onclick="CreateClient"><span class="fa fa-plus"></span> CreateClient</button>
-    <button class="btn btn-success" @onclick="CreateClient"><span class="fa fa-sign-in"></span> ImportClient</button>
-    <button class="btn btn-secondary" @onclick="CreateClient"><span class="fa fa-print"></span> ExportClient</button>
+    <button class="btn btn-primary text-dark" @onclick="CreateClient"><span class="fa fa-plus"></span> Create Client</button>
+    <button class="btn btn-success text-dark" @onclick="OpenFilePicker"><span class="fa fa-sign-in"></span> Import Client</button>
+    @*<InputFile accept="application/JSON" OnChange="HandleFileSelected" id="importConfig" hidden/>*@
+
+    <button class="btn btn-secondary text-dark" @onclick="ExportJson"><span class="fa fa-print"></span> Export Client</button>
     <h4 style="margin-top:10px;">Configuration File : @ConfigFilePath</h4>
 </div>
 <div class="row">
@@ -34,7 +37,7 @@
                         <h5 class="card-title">
                             @client.MqttClientModel.ClientName
                             <button title="Delete" class="btn btn-link text-dark" style="float:right;" @onclick="() => Delete(client.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></button>
-                            <button title="Disconnect" class="btn btn-link text-dark" style="float:right;" @onclick="() => Connect(client)"><span class="fa fa-refresh fa-lg"></span></button>
+                            <button title="Connect" class="btn btn-link text-dark" style="float:right;" @onclick="() => Connect(client)"><span class="fa fa-refresh fa-lg"></span></button>
                         </h5>
                     </div>
                 }
@@ -50,26 +53,21 @@
 
 
 @code {
+
     List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
     string ConfigFilePath;
+
     protected override async Task OnInitializedAsync()
     {
         LoadClients();
+        ConnectToMqtt();
         StateHasChanged();
     }
-    private void LoadClients()
-    {
-        mqttClientConnector.Clear();
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-        ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
-        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
-        {
-            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
-            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
-            //mqttClientModels = MqttClientModel.mqttClients;
-        }
+
+    private void ConnectToMqtt(){
         if (MqttClientModel.mqttClients.Count > 0)
         {
+            mqttClientConnector.Clear();
             foreach (var clientmodel in MqttClientModel.mqttClients)
             {
                 var mqttconnector = new MqttConnector(clientmodel);
@@ -95,20 +93,62 @@
             }
         }
     }
+
+    private async void OpenFilePicker() {
+        var jsonFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>{
+                { DevicePlatform.iOS, new[] { ".JSON" } },
+                { DevicePlatform.Android, new[] { "application/JSON" } },
+                { DevicePlatform.WinUI, new[] { ".json" } },
+                { DevicePlatform.Tizen, new[] { ".JSON" } },
+                { DevicePlatform.macOS, new[] { "json" } },
+        });
+        var result = await FilePicker.PickAsync(new PickOptions
+        {
+            FileTypes = jsonFileType,
+            PickerTitle = "Select Config(json)File"
+        });
+        if(result == null){
+            return;
+        }
+        else{
+            var stream = await result.OpenReadAsync();
+            MqttClientModel.mqttClients = await System.Text.Json.JsonSerializer.DeserializeAsync<List<MqttClientModel>>(stream);
+            ConfigFilePath = result.FullPath;
+            ConnectToMqtt();
+            StateHasChanged();
+        }
+    }
+
+    private void LoadClients()
+    {
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+        if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+        {
+            var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+            MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            //mqttClientModels = MqttClientModel.mqttClients;
+        }
+
+    }
+
     private void Disconnect(MqttModelConnection mqttModelConnection)
     {
         mqttModelConnection.MqttConnector.Disconnect();
         StateHasChanged();
     }
+
     private void Connect(MqttModelConnection mqttModelConnection)
     {
         mqttModelConnection.MqttConnector.StartConnecting();
         StateHasChanged();
     }
+
     private void ClientSelect(MqttModelConnection client)
     {
         NavManager.NavigateTo($"/PubSubTopic/{client.MqttClientModel.ClientId}");
     }
+
     private void Delete(MqttClientModel client)
     {
         MqttClientModel.mqttClients.Remove(client);
@@ -122,9 +162,23 @@
         mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         StateHasChanged();
     }
+
     private void CreateClient()
     {
         string param = null;
         NavManager.NavigateTo($"/createClient");
+    }
+
+    private async void ExportJson(){
+
+        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+        var stream = new MemoryStream();
+        var writer = new StreamWriter(stream);
+        writer.Write(json);
+        writer.Flush();
+        stream.Position = 0;
+        using var streamRef = new DotNetStreamReference(stream: stream);
+
+        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", "config.json", streamRef);
     }
 }

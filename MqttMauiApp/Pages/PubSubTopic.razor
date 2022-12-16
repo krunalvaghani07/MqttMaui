@@ -8,11 +8,13 @@
 <div>
     @if (IsConnected)
     {
-        <button class="btn btn-success">Connected</button>
+        <button class="btn btn-success"><span class="fa fa-toggle-on fa-lg"></span> Connected</button>
+        <button title="Disconnect" class="btn btn-link text-dark" @onclick="() => Disconnect()"><span class="fa fa-power-off fa-lg"></span></button>
     }
     else
     {
-        <button class="btn btn-danger">Offline</button>
+        <button class="btn btn-danger"><span class="fa fa-toggle-off fa-lg"></span> Offline</button>
+        <button title="Connect" class="btn btn-link text-dark" @onclick="() => Connect()"><span class="fa fa-refresh fa-lg"></span></button>
     }
     <button style="margin-left:100px;" class="btn btn-primary" @onclick="AddPublisher">Add Publisher</button>
     <button class="btn btn-warning" @onclick="AddSubscriber">Add Subscriber</button>
@@ -182,5 +184,14 @@
     }
     private void EditClient(){
         NavManager.NavigateTo($"/createClient/{mqttClientModel.ClientId}");
+    }
+    private void Disconnect(){
+        mqttConnector.Disconnect();
+        StateHasChanged();
+    }
+    private void Connect()
+    {
+        mqttConnector.StartConnecting();
+        StateHasChanged();
     }
 }
