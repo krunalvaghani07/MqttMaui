@@ -1,0 +1,142 @@
+﻿@page "/Home"
+@using MqttMauiApp.Model
+@inject NavigationManager NavManager
+@using System.Text.Json;
+@using System.Text.Json.Serialization;
+@using Microsoft.AspNetCore.Hosting;
+@using Newtonsoft.Json;
+@inject MqttMauiApp.Interfaces.IFolderPicker FolderPicker
+@using MqttMauiApp
+
+
+<div class="d-flex" style="height:100%;">
+    <div class="" style="height:100%;width:250px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
+        <div class="d-flex flex-fill">
+            <h4 class="p-2 w-100 bd-highlight"><b>Connections</b></h4>
+            <a class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center"><span class="fa fa-plus-circle"></span> </a>
+        </div>
+        <div class="list-group" style="margin-right:10px;justify-content: flex-start;">
+            @foreach (var client in mqttClientConnector)
+            {
+                var host = client.MqttClientModel.ClientName + "@" + client.MqttClientModel.Host;
+                <button title="@host" data-toggle="tooltip" data-placement="top" style="height:40px;cursor: pointer; @DivStyle(client)" class="d-flex justify-content-start text-truncate border-0" @onclick="() => SetSelect(client)">
+                   @if(client.IsConnected){
+                        <span class="fa fa-circle" style="color:green;margin-top:10px"></span>
+                   }
+                   else{
+                        <span class="fa fa-circle" style="color:red;margin-top:10px"></span>
+                   }
+                    <small style="margin:10px"><b>@host</b></small>
+                </button>
+            }
+
+        </div>
+    </div>
+    @if (SelectedClient.MqttClientModel != null)
+    {
+        <div class="container-fluid">
+            <div class="row" style="border-bottom: 2px solid grey;">
+                <div class="d-flex flex-fill">
+                    <h4 class="" style="color:#336600">
+                        <b>
+                            @SelectedClient.MqttClientModel.ClientName
+
+                    </b>
+                        <a class="btn btn-link text-dark text-center"><span class="fa fa-level-down"></span> </a>
+                    </h4>
+                    <a class=" btn btn-link text-dark text-center"><span class="fa fa-power-off"></span> </a>
+                    <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o"></span> </a>
+
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+@code {
+    List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
+    string ConfigFilePath;
+    MqttModelConnection SelectedClient = new MqttModelConnection();
+
+    bool IsSelected(MqttModelConnection client)
+        => SelectedClient == client;
+
+    string DivStyle(MqttModelConnection client)
+        => IsSelected(client) ? "background:rgb(240,240,240)" : "background:white";
+
+    void SetSelect(MqttModelConnection client)
+    {
+
+        SelectedClient = client;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        LoadClients();
+        ConnectToMqtt();
+        SelectedClient = mqttClientConnector[0];
+        StateHasChanged();
+    }
+    private void LoadClients()
+    {
+        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        if (File.Exists($@"{mainDir}\wwwroot\clientconfig.txt"))
+        {
+            var path = File.ReadAllText($@"{mainDir}\wwwroot\clientconfig.txt");
+            if (File.Exists(path))
+            {
+                ConfigFilePath = path;
+                var data = File.ReadAllText(ConfigFilePath);
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            }
+            else
+            {
+                ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+                var data = File.ReadAllText(ConfigFilePath);
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+            }
+        }
+        else
+        {
+            ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+            if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+            {
+                var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+                MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
+                //mqttClientModels = MqttClientModel.mqttClients;
+            }
+        }
+        MqttClientModel.ConfigPath = ConfigFilePath;
+    }
+
+    private void ConnectToMqtt()
+    {
+        mqttClientConnector.Clear();
+        if (MqttClientModel.mqttClients.Count > 0)
+        {
+            foreach (var clientmodel in MqttClientModel.mqttClients)
+            {
+                var mqttconnector = new MqttConnector(clientmodel);
+                var client = mqttconnector.Connect(clientmodel);
+                mqttClientConnector.Add(new MqttModelConnection() { MqttConnector = mqttconnector, Client = client, MqttClientModel = clientmodel, IsConnected = false });
+                client.ConnectedAsync += async e =>
+                {
+                    mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now; });
+                    await InvokeAsync(() =>
+                    {
+                        StateHasChanged();
+                    });
+                };
+                client.DisconnectedAsync += async e =>
+               {
+                   mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; });
+                   await InvokeAsync(() =>
+                   {
+                       StateHasChanged();
+                   });
+               };
+                mqttconnector.StartConnecting();
+            }
+        }
+    }
+}

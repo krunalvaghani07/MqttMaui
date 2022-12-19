@@ -1,27 +1,24 @@
-﻿<nav class="navbar navbar-expand navbar-dark bg-dark">
-    <a class="navbar-brand" style="margin-left:10px;" href="#">MQTT ConnectorApp</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
-        <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-            <li class="nav-item active">
-                <a class="nav-link" href="/">MqttClients</a>
-            </li>
-            <li class="nav-item">
-              @*  <a class="btn btn-primary" href="/createClient">Create Mqtt Client</a>*@
-            </li>
-        </ul>
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Mqtt</a>
     </div>
-</nav>
+</div>
+
+<div>
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/Home" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span>
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="oi oi-plus" aria-hidden="true"></span> 
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
 @code {
-    private bool collapseNavMenu = true;
-
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+   
 }
