@@ -50,11 +50,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Remove="Pages\Home.razor" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Include="Pages\Home.razor" />
       <None Include="wwwroot\broker.emqx.io-ca.crt" />
     </ItemGroup>
 
@@ -62,14 +57,6 @@
       <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
       <PackageReference Include="MQTTnet" Version="4.1.4.563" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <UpToDateCheckInput Remove="Pages\Home.razor" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Pages\Home.razor" />
     </ItemGroup>
 
 </Project>
