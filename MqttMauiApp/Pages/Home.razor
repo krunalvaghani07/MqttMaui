@@ -149,8 +149,8 @@
 
 </style>
 
-<div class="d-flex" style="height:100%;">
-    <div class="" style="height:100%;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
+<div class="d-flex">
+    <div class="" style="height:100vh;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
         <div class="d-flex flex-fill">
             <h4 class="p-2 w-100 bd-highlight"><b>Connections</b></h4>
             <a class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center"><span class="fa fa-plus-circle"></span> </a>
@@ -179,7 +179,7 @@
     @if (SelectedClient.MqttClientModel != null)
     {
         <div class="d-flex flex-column" style="width:100%;">
-            <div class="row" style="border-bottom: 2px solid grey;">
+            <div class="row" style="height:5vh;border-bottom: 2px solid grey;">
                 <div class="d-flex flex-fill">
                     <h4 class="" style="color:#336600;margin:5px">
                         <b>
@@ -187,12 +187,17 @@
 
                         </b>
                         <a class="btn btn-link text-dark text-center"><span class="fa fa-level-down"></span> </a>
-                        <a class=" btn btn-link text-dark text-center"><span class="fa fa-power-off"></span> </a>
+                        @if(SelectedClient.IsConnected){
+                            <a title="Disconnect" @onclick="() => Disconnect()" class=" btn btn-link text-danger text-center"><span class="fa fa-power-off"></span> </a>
+                        }
+                        else{
+                            <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
+                        }
                         <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o"></span> </a>
                     </h4>
                 </div>
             </div>
-            <div style="height:100%;" class="d-flex">
+            <div style="height:95vh;" class="d-flex">
                 <div class="card border-0" style="height:100%;width:250px;background:white;margin-right:10px;border-right: 1px solid green;box-shadow: 10px 0 5px -2px #888;">
                     <div class="card-header text-center border-0" style="background:white;">
                         <button type="button" class="btn btn-outline-success"><span class="fa fa-plus"></span> New Subscription</button>
@@ -223,20 +228,21 @@
                             </div>
                         </header>
 
-                        <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+                        
+                        <main class="msger-chat">
+                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
 
-                            <div class="msg-bubble">
-                                <div class="msg-info">
-                                    <div class="msg-info-name">Topic : Tester</div>
-                                    <div class="msg-info-time">@DateTime.Now</div>
-                                </div>
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
 
-                                <div class="msg-text">
-                                    Sent Message
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <main class="msger-chat">
                             <div class="msg left-msg">
                                 <div class="msg-bubble">
                                     <div class="msg-info">
@@ -249,22 +255,19 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
 
-                        </main>
-                        <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
 
-                            <div class="msg-bubble">
-                                <div class="msg-info">
-                                    <div class="msg-info-name">Topic : Tester</div>
-                                    <div class="msg-info-time">@DateTime.Now</div>
-                                </div>
-
-                                <div class="msg-text">
-                                    Sent Message
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <main class="msger-chat">
                             <div class="msg left-msg">
                                 <div class="msg-bubble">
                                     <div class="msg-info">
@@ -277,22 +280,19 @@
                                     </div>
                                 </div>
                             </div>
+                             <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
 
-                        </main>
-                        <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
 
-                            <div class="msg-bubble">
-                                <div class="msg-info">
-                                    <div class="msg-info-name">Topic : Tester</div>
-                                    <div class="msg-info-time">@DateTime.Now</div>
-                                </div>
-
-                                <div class="msg-text">
-                                    Sent Message
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <main class="msger-chat">
                             <div class="msg left-msg">
                                 <div class="msg-bubble">
                                     <div class="msg-info">
@@ -305,9 +305,57 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
 
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
+
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="msg left-msg">
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
+
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
+
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="msg left-msg">
+                                <div class="msg-bubble">
+                                    <div class="msg-info">
+                                        <div class="msg-info-name">Topic : Tester</div>
+                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    </div>
+
+                                    <div class="msg-text">
+                                        Sent Message
+                                    </div>
+                                </div>
+                            </div>
                         </main>
-
                         <div class="msger-inputarea" style="width:100%">
                             <EditForm Model="SelectedClient.MqttClientModel">
                                 <div class="d-flex" style="margin:5px;width:100%">
@@ -340,37 +388,6 @@
 
                         </div>
                     </section>
-                    @* <div style="height:40px;border-bottom: 2px solid grey;">
-                </div>
-                <div class="card-body overflow-auto border-0 d-flex flex-column" style="max-height: ;;padding:0;overflow-y: auto;background:#1d1e22">
-                <div class="card text-light" style="background:blue;float:right;margin-left: auto;margin-right:10px;margin-top:10px;border-radius: 20px 20px 3px 20px;">
-                <div class="card-body" style="">
-                <div class="card-title">Topic : Tesing <p style="float:right">Qos : 0</p></div>
-                <p class="card-text">Hello Published</p>
-                <small class="card-text" style="float:right">@DateTime.Now</small>
-                </div>
-                </div>
-                <div class="card w-25" style="background:green;margin:10px;border-radius: 20px 20px 20px 3px;">
-                <div class="card-body" style="">
-                <div class="card-title">Topic : Tesing <p style="float:right">Qos : 0</p></div>
-                <p class="card-text">Hello Published</p>
-                <small class="card-text" style="float:right">@DateTime.Now</small>
-                </div>
-                </div>
-                <div class="card w-25 text-light" style="background:blue;float:right;margin-left: auto;margin-right:10px;margin-top:10px;border-radius: 20px 20px 3px 20px;">
-                <div class="card-body" style="">
-                <div class="card-title">Topic : Tesing <p style="float:right">Qos : 0</p></div>
-                <p class="card-text">Hello Published</p>
-                <small class="card-text" style="float:right">@DateTime.Now</small>
-                </div>
-                </div>
-                </div>
-                <div class="card-footer border-0 text-muted" style="background:white;">
-                2 days ago
-                <h5 class="card-title">Special title treatment</h5>
-                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
-                <a href="#" class="btn btn-primary">Go somewhere</a>
-                </div>*@
                 </div>
             </div>
         </div>
@@ -464,5 +481,17 @@
                 mqttconnector.StartConnecting();
             }
         }
+    }
+
+    private void Disconnect()
+    {
+        SelectedClient.MqttConnector.Disconnect();
+        StateHasChanged();
+    }
+
+    private void Connect()
+    {
+        SelectedClient.MqttConnector.StartConnecting();
+        StateHasChanged();
     }
 }
