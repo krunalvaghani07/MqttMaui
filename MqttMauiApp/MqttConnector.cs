@@ -112,7 +112,7 @@ namespace MqttMauiApp
                            .WithRetainFlag()
                            .Build();
                         break;
-                    case Qos.Almost:
+                    case Qos.Atmost:
                          sendmessage = new MqttApplicationMessageBuilder()
                            .WithTopic(topicname)
                            .WithPayload(message)
@@ -156,7 +156,7 @@ namespace MqttMauiApp
                 case Qos.Atleast:
                     topicbuilder = new MqttTopicFilterBuilder().WithTopic(topicname).WithAtLeastOnceQoS().Build();
                     break;
-                case Qos.Almost:
+                case Qos.Atmost:
                     topicbuilder = new MqttTopicFilterBuilder().WithTopic(topicname).WithAtMostOnceQoS().Build();
                     break;
                 case Qos.Exactly:

@@ -86,7 +86,7 @@
                             @foreach (var msg in item.RecievedMessages)
                             {
                                 <div class="card" style="margin-top:10px;">
-                                    <div class="card-header">Recieved : @System.Text.Encoding.UTF8.GetString(msg.Payload)</div>
+                                    <div class="card-header">Recieved : @System.Text.Encoding.UTF8.GetString(msg.Msg.Payload)</div>
                                     <div class="card-body" style="padding-top:0px; padding-bottom:0px">Topic : @item.TopicName</div>
                                 </div>
                             }
@@ -128,15 +128,15 @@
                };
         mqttConnector.StartConnecting();
 
-        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<string>() });
-        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 2, ClientId = mqttClientModel.ClientId, IsSubscribed = false, topicType = TopicType.Subscriber, RecievedMessages = new List<MqttApplicationMessage>() });
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<SentMessage>() });
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = 2, ClientId = mqttClientModel.ClientId, IsSubscribed = false, topicType = TopicType.Subscriber, RecievedMessages = new List<RecievedMessage>() });
         mqttClient.ApplicationMessageReceivedAsync += async e =>
           {
               MyModel.PublisherSubscribers.Where(ps => ps.TopicName == e.ApplicationMessage.Topic &&
                    ps.IsSubscribed == true
               //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
               ).ToList().
-                   ForEach(ch => ch.RecievedMessages.Add(e.ApplicationMessage));
+                   ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
               await InvokeAsync(() =>
               {
                   StateHasChanged();
@@ -154,12 +154,12 @@
     }
     private void AddPublisher()
     {
-        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<string>() });
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, ClientId = mqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<SentMessage>() });
         StateHasChanged();
     }
     private void AddSubscriber()
     {
-        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, IsSubscribed = false, ClientId = mqttClientModel.ClientId, topicType = TopicType.Subscriber, RecievedMessages = new List<MqttApplicationMessage>() });
+        MyModel.PublisherSubscribers.Add(new PublisherSubscriber { Id = MyModel.PublisherSubscribers.Count + 1, IsSubscribed = false, ClientId = mqttClientModel.ClientId, topicType = TopicType.Subscriber, RecievedMessages = new List<RecievedMessage>() });
         StateHasChanged();
     }
     private void PublishMessage(PublisherSubscriber publisher)
@@ -167,7 +167,7 @@
         if (publisher.TopicName != null && publisher.PublishMessage != null)
         {
             mqttConnector.PublishTopic(publisher.TopicName, publisher.PublishMessage, publisher.QosType);
-            MyModel.PublisherSubscribers.Where(ps => ps.Id == publisher.Id).ToList().ForEach(ch => ch.SentMessages.Add("Sent : " + publisher.PublishMessage));
+            MyModel.PublisherSubscribers.Where(ps => ps.Id == publisher.Id).ToList().ForEach(ch => ch.SentMessages.Add(new SentMessage("Sent : " + publisher.PublishMessage, DateTime.Now,publisher.QosType)));
         }
 
     }

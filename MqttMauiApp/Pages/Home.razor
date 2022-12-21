@@ -1,4 +1,6 @@
 ﻿@page "/Home"
+@using MQTTnet
+@using MQTTnet.Protocol
 @using MqttMauiApp.Model
 @inject NavigationManager NavManager
 @using System.Text.Json;
@@ -159,8 +161,8 @@
             @foreach (var client in mqttClientConnector)
             {
                 var host = client.MqttClientModel.ClientName + "@" + client.MqttClientModel.Host;
-                <div style="border-radius: 8px;height:40px;cursor: pointer; @DivStyle(client)" @onclick="() => SetSelect(client)">
-                    <button title="@host" data-toggle="tooltip" data-placement="top" style="max-width:200px;@DivStyle(client)" class="d-flex justify-content-start text-truncate border-0">
+                <div style="border-radius: 8px;height:40px;cursor: pointer; @DivClientStyle(client)" @onclick="() => SetClientSelect(client)">
+                    <button title="@host" data-toggle="tooltip" data-placement="top" style="max-width:200px;@DivClientStyle(client)" class="d-flex justify-content-start text-truncate border-0">
                         @if (client.IsConnected)
                         {
                             <span class="fa fa-circle" style="color:green;margin-left:10px;margin-top:10px"></span>
@@ -181,16 +183,17 @@
         <div class="d-flex flex-column" style="width:100%;">
             <div class="row" style="height:5vh;border-bottom: 2px solid grey;">
                 <div class="d-flex flex-fill">
-                    <h4 class="" style="color:#336600;margin:5px">
+                    <h4 class="" style="color:rgb(2, 48, 32);margin:5px">
                         <b>
                             @SelectedClient.MqttClientModel.ClientName
 
                         </b>
-                        <a class="btn btn-link text-dark text-center"><span class="fa fa-level-down"></span> </a>
-                        @if(SelectedClient.IsConnected){
+                        @if (SelectedClient.IsConnected)
+                        {
                             <a title="Disconnect" @onclick="() => Disconnect()" class=" btn btn-link text-danger text-center"><span class="fa fa-power-off"></span> </a>
                         }
-                        else{
+                        else
+                        {
                             <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
                         }
                         <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o"></span> </a>
@@ -198,23 +201,22 @@
                 </div>
             </div>
             <div style="height:95vh;" class="d-flex">
-                <div class="card border-0" style="height:100%;width:250px;background:white;margin-right:10px;border-right: 1px solid green;box-shadow: 10px 0 5px -2px #888;">
+                <div class="card border-0" style="height:100%;width:350px;background:white;margin-right:10px;border-right: 1px solid green;box-shadow: 10px 0 5px -2px #888;">
                     <div class="card-header text-center border-0" style="background:white;">
-                        <button type="button" class="btn btn-outline-success"><span class="fa fa-plus"></span> New Subscription</button>
+                        <button type="button" class="btn btn-outline-success" @onclick="OpenSubModal"><span class="fa fa-plus"></span> New Subscription</button>
                     </div>
                     <div class="card-body">
-                        @*    <div style="border-radius: 8px;height:40px;cursor: pointer;background:rgb(240,240,240)" class="d-flex">
-                    <button style="border-radius: 8px;background:rgb(240,240,240)" class="p-2  text-truncate border-0">
-                    testsub
+                        @foreach (var subscriber in PublisherSubscriber.PublisherSubscribers.Where(c => c.ClientId == SelectedClient.MqttClientModel.ClientId && c.topicType == TopicType.Subscriber))
+                        {
+                            int index = (int)((Qos)Enum.Parse(typeof(Qos), subscriber.QosType.ToString()));
+                            <div class="d-flex bd-highlight" style="border-radius: 8px;margin-top:10px;cursor: pointer; @DivSubStyle(subscriber)" @onclick="() => SetSubSelect(subscriber)">
+                                <div class="p-2 flex-grow-1 bd-highlight">@subscriber.TopicName</div>
+                                <div class="p-2 bd-highlight">Qos @index</div>
+                                <a class="p-2 btn btn-link text-warning text-center"><span class="fa fa-pause-circle-o"></span> </a>
+                                <a class="p-2 btn btn-link text-danger text-center"><span class="fa fa-trash-o"></span> </a>
+                            </div>
+                        }
 
-                    </button>
-
-                    <p style="float:right;">Qos 0</p>
-                    </div>*@
-                        <div class="d-flex bd-highlight" style="border-radius: 8px;height:40px;cursor: pointer;background:rgb(240,240,240)">
-                            <div class="p-2 flex-grow-1 bd-highlight">testsub</div>
-                            <div class="p-2 bd-highlight">Qos 0</div>
-                        </div>
                     </div>
                 </div>
                 <div class="card border-0" style="padding:0;width:100%;">
@@ -228,144 +230,65 @@
                             </div>
                         </header>
 
-                        
                         <main class="msger-chat">
-                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+                            @foreach (var msg in ArrangeMsg())
+                            {
+                                if (msg.topicType == TopicType.Publisher)
+                                {
+                                    int index = (int)((Qos)Enum.Parse(typeof(Qos), msg.QosType.ToString()));
+                                    <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
 
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
+                                        <div class="msg-bubble">
+                                            <div class="msg-info">
+                                                <div class="msg-info-name">Topic : @msg.TopicName</div>
+                                                <div class="msg-info-time">Qos @index</div>
+                                            </div>
 
-                                    <div class="msg-text">
-                                        Sent Message
+                                            <div class="msg-text">
+                                                @msg.PublishMessage
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="msg left-msg">
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
+                                    <div>
+                                        <small style="font-size: 0.85em;flex-direction: row-reverse;float:right;">@msg.SendRecTime</small>
                                     </div>
+                                }
+                                else
+                                {
+                                    int index1 = (int)((MqttQualityOfServiceLevel)Enum.Parse(typeof(MqttQualityOfServiceLevel), msg.RecQOS.ToString()));
+                                    <div class="msg left-msg">
+                                        <div class="msg-bubble">
+                                            <div class="msg-info">
+                                                <div class="msg-info-name">Topic : @msg.TopicName</div>
+                                                <div class="msg-info-time">Qos @index1</div>
+                                                @if (msg.isRetain)
+                                                {
+                                                    <div><button class="btn btn-warning btn-sm" style="margin-left:5px;border-radius: 8px;">Retain</button></div>
+                                                }
+                                            </div>
 
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
+                                            <div class="msg-text">
+                                                @msg.PublishMessage
+                                            </div>
+                                        </div>
 
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
                                     </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
+                                    <div>
+                                        <small style="font-size: 0.85em;">@msg.SendRecTime</small>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="msg left-msg">
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                             <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
-
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg left-msg">
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
-
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg left-msg">
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg right-msg" style="margin-right:10px;margin-top:10px;">
-
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="msg left-msg">
-                                <div class="msg-bubble">
-                                    <div class="msg-info">
-                                        <div class="msg-info-name">Topic : Tester</div>
-                                        <div class="msg-info-time">@DateTime.Now</div>
-                                    </div>
-
-                                    <div class="msg-text">
-                                        Sent Message
-                                    </div>
-                                </div>
-                            </div>
+                                }
+                            }
                         </main>
                         <div class="msger-inputarea" style="width:100%">
                             <EditForm Model="SelectedClient.MqttClientModel">
                                 <div class="d-flex" style="margin:5px;width:100%">
                                     <div style="margin:5px;">Topic : </div>
-                                    <div><input type="text" class="form-control" @bind-value="topicName" required></div>
+                                    <div><input type="text" class="form-control" @bind-value="pubtopicName" required></div>
 
                                     <div style="margin:5px;">Qos : </div>
                                     <div>
 
-                                        <InputSelect class="form-control" @bind-Value="SelectedClient.MqttClientModel.QosType">
+                                        <InputSelect class="form-control" @bind-Value="PubType">
 
                                             @foreach (var qos in Enum.GetValues(typeof(Qos)))
                                             {
@@ -381,7 +304,7 @@
                                         <InputTextArea class="form-control" style="" @bind-Value="pubMsg" rows="4">
 
                                         </InputTextArea>
-                                        <a class="btn btn-link text-success align-self-baseline" style=" position: absolute;bottom: 0;right: 0;"><span class="fa fa-send"></span> </a>
+                                        <a class="btn btn-link text-success align-self-baseline" style=" position: absolute;bottom: 0;right: 0;" @onclick="AddPublisher"><span class="fa fa-send"></span> </a>
                                     </div>
                                 </div>
                             </EditForm>
@@ -394,32 +317,98 @@
     }
 </div>
 
+@if (IsSubOpen)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <EditForm Model="SelectedClient.MqttClientModel">
+                    <div class="modal-header">
+                        <h5 class="modal-title"> New Subscription</h5>
+                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseSubModal">
+                            <span class="fa fa-remove"></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div>Topic Name</div>
+                        <div>
+                            <input type="text" class="form-control" @bind-value="subtopicName" required>
+                        </div>
+                        <div>Qos</div>
+                        <div>
+                            <InputSelect class="form-control" @bind-Value="SubType">
+
+                                @foreach (var qos in Enum.GetValues(typeof(Qos)))
+                                {
+                                    int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
+                                    <option value="@qos">@index - @qos Once</option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" data-save="modal" @onclick="AddSubscriber">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseSubModal">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+
 
 @code {
-    string topicName = "";
+    string pubtopicName = "";
+    string subtopicName = "";
     string pubMsg = "";
+    Qos PubType;
+    Qos SubType;
+    bool IsSubOpen = false;
     List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
     string ConfigFilePath;
-    MqttModelConnection SelectedClient = new MqttModelConnection();
 
-    bool IsSelected(MqttModelConnection client)
+    MqttModelConnection SelectedClient = new MqttModelConnection();
+    PublisherSubscriber SelectedSubscriber = new PublisherSubscriber();
+
+    bool IsClientSelected(MqttModelConnection client)
         => SelectedClient == client;
 
-    string DivStyle(MqttModelConnection client)
-        => IsSelected(client) ? "background:rgb(240,240,240)" : "background:white";
+    string DivClientStyle(MqttModelConnection client)
+        => IsClientSelected(client) ? "background:rgb(27, 18, 18);color:white" : "background:white";
 
-    void SetSelect(MqttModelConnection client)
+    void SetClientSelect(MqttModelConnection client)
     {
 
         SelectedClient = client;
+        PubType = client.MqttClientModel.QosType;
+        SubType = client.MqttClientModel.QosType;
     }
+
+    bool IsSubSelected(PublisherSubscriber sub)
+       => SelectedSubscriber == sub;
+
+    string DivSubStyle(PublisherSubscriber sub)
+        => IsSubSelected(sub) ? "background:rgb(48, 25, 52);color:white" : "background:white";
+
+    void SetSubSelect(PublisherSubscriber sub)
+    {
+        SelectedSubscriber = sub;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         LoadClients();
         ConnectToMqtt();
-        SelectedClient = mqttClientConnector[0];
+        if (mqttClientConnector.Count > 0)
+        {
+            SelectedClient = mqttClientConnector[0];
+            PubType = mqttClientConnector[0].MqttClientModel.QosType;
+            SubType = mqttClientConnector[0].MqttClientModel.QosType;
+        }
         StateHasChanged();
     }
+
     private void LoadClients()
     {
         string mainDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -479,6 +468,18 @@
                    });
                };
                 mqttconnector.StartConnecting();
+                client.ApplicationMessageReceivedAsync += async e =>
+                 {
+                     PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == e.ApplicationMessage.Topic &&
+                          ps.IsSubscribed == true
+                     //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
+                     ).ToList().
+                          ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
+                     await InvokeAsync(() =>
+                     {
+                         StateHasChanged();
+                     });
+                 };
             }
         }
     }
@@ -493,5 +494,93 @@
     {
         SelectedClient.MqttConnector.StartConnecting();
         StateHasChanged();
+    }
+
+    private void OpenSubModal()
+    {
+        IsSubOpen = true;
+        subtopicName = "";
+        SubType = SelectedClient.MqttClientModel.QosType;
+        StateHasChanged();
+    }
+
+    private void CloseSubModal()
+    {
+        IsSubOpen = false;
+    }
+
+    private void AddPublisher()
+    {
+        if (SelectedClient.IsConnected)
+        {
+            if (PublisherSubscriber.PublisherSubscribers.Any(t => t.TopicName == pubtopicName && t.topicType == TopicType.Publisher))
+            {
+                PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == pubtopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.SentMessages.Add(new SentMessage(pubMsg, DateTime.Now, PubType)));
+            }
+            else
+            {
+                PublisherSubscriber.PublisherSubscribers.Add(new PublisherSubscriber { Id = PublisherSubscriber.PublisherSubscribers.Count + 1, TopicName = pubtopicName, ClientId = SelectedClient.MqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<SentMessage>() { new SentMessage(pubMsg, DateTime.Now, PubType) } });
+            }
+            SelectedClient.MqttConnector.PublishTopic(pubtopicName, pubMsg, PubType);
+
+        }
+        StateHasChanged();
+    }
+
+    private void AddSubscriber()
+    {
+        if (SelectedClient.IsConnected)
+        {
+            SelectedClient.MqttConnector.Subscribe(subtopicName, SubType);
+            if (!PublisherSubscriber.PublisherSubscribers.Any(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId))
+            {
+                PublisherSubscriber.PublisherSubscribers.Add(new PublisherSubscriber { Id = PublisherSubscriber.PublisherSubscribers.Count + 1, IsSubscribed = true, TopicName = subtopicName, ClientId = SelectedClient.MqttClientModel.ClientId, QosType = SubType, topicType = TopicType.Subscriber, RecievedMessages = new List<RecievedMessage>() });
+            }
+            else
+            {
+                PublisherSubscriber.PublisherSubscribers.Where(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.QosType = SubType);
+            }
+            IsSubOpen = false;
+        }
+
+        StateHasChanged();
+    }
+
+    List<PublisherSubscriber> ArrangeMsg()
+    {
+        var lst = new List<PublisherSubscriber>();
+        if (SelectedClient.MqttClientModel.ClientId != null)
+        {
+            if (SelectedSubscriber.Id != 0)
+            {
+                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName== SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
+                var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.Id == SelectedSubscriber.Id && ps.topicType == TopicType.Subscriber && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
+                if (Send != null)
+                {
+                    Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
+                }
+                if (Rec != null)
+                {
+                    Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
+                }
+            }
+            else
+            {
+                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
+                var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Subscriber && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
+                if (Send != null)
+                {
+                    Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
+                }
+                if (Rec != null)
+                {
+                    Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
+                }
+            }
+
+            lst = lst.OrderByDescending(c => c.SendRecTime.Date).ThenBy(c => c.SendRecTime.TimeOfDay).ToList();
+        }
+
+        return lst;
     }
 }
