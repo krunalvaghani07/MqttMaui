@@ -209,11 +209,18 @@
                         @foreach (var subscriber in PublisherSubscriber.PublisherSubscribers.Where(c => c.ClientId == SelectedClient.MqttClientModel.ClientId && c.topicType == TopicType.Subscriber))
                         {
                             int index = (int)((Qos)Enum.Parse(typeof(Qos), subscriber.QosType.ToString()));
-                            <div class="d-flex bd-highlight" style="border-radius: 8px;margin-top:10px;cursor: pointer; @DivSubStyle(subscriber)" @onclick="() => SetSubSelect(subscriber)">
-                                <div class="p-2 flex-grow-1 bd-highlight">@subscriber.TopicName</div>
-                                <div class="p-2 bd-highlight">Qos @index</div>
-                                <a class="p-2 btn btn-link text-warning text-center"><span class="fa fa-pause-circle-o"></span> </a>
-                                <a class="p-2 btn btn-link text-danger text-center"><span class="fa fa-trash-o"></span> </a>
+                            <div class="d-flex bd-highlight" style="border-radius: 8px;margin-top:10px;cursor: pointer; @DivSubStyle(subscriber)">
+                                <div class="p-2 flex-grow-1 bd-highlight" @onclick="() => SetSubSelect(subscriber)">@subscriber.TopicName</div>
+                                <div class="p-2 bd-highlight" @onclick="() => SetSubSelect(subscriber)">Qos @index</div>
+                                @if (subscriber.IsSubscribed)
+                                {
+                                    <a class="p-2 btn btn-link text-warning text-center" @onclick="()=>UnSubscribeTopic(subscriber)"><span class="fa fa-pause-circle-o"></span> </a>
+                                }
+                                else
+                                {
+                                    <a class="p-2 btn btn-link text-primary text-center" @onclick="()=>SubscribeTopic(subscriber.Id,subscriber.TopicName,subscriber.QosType)"><span class="fa fa-play"></span> </a>
+                                }
+                                <a class="p-2 btn btn-link text-danger text-center" @onclick="() => DeleteSub(subscriber)"><span class="fa fa-trash-o"></span> </a>
                             </div>
                         }
 
@@ -252,6 +259,7 @@
                                     <div>
                                         <small style="font-size: 0.85em;flex-direction: row-reverse;float:right;">@msg.SendRecTime</small>
                                     </div>
+                                    <br/>
                                 }
                                 else
                                 {
@@ -546,6 +554,13 @@
         StateHasChanged();
     }
 
+    private void SubscribeTopic(int id, string topicname, Qos qos)
+    {
+        PublisherSubscriber.PublisherSubscribers.Where(ps => ps.Id == id).ToList().ForEach(ch => { ch.IsSubscribed = true; });
+        var flag = SelectedClient.MqttConnector.Subscribe(topicname, qos);
+        StateHasChanged();
+    }
+
     List<PublisherSubscriber> ArrangeMsg()
     {
         var lst = new List<PublisherSubscriber>();
@@ -553,7 +568,7 @@
         {
             if (SelectedSubscriber.Id != 0)
             {
-                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName== SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
+                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
                 var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.Id == SelectedSubscriber.Id && ps.topicType == TopicType.Subscriber && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
                 if (Send != null)
                 {
@@ -582,5 +597,16 @@
         }
 
         return lst;
+    }
+
+    private void UnSubscribeTopic(PublisherSubscriber subscriber)
+    {
+        PublisherSubscriber.PublisherSubscribers.Where(ps => ps.Id == subscriber.Id).ToList().ForEach(ch => { ch.IsSubscribed = false; });
+        StateHasChanged();
+    }
+
+    private void DeleteSub(PublisherSubscriber subscriber){
+        PublisherSubscriber.PublisherSubscribers.Remove(subscriber);
+        StateHasChanged();
     }
 }
