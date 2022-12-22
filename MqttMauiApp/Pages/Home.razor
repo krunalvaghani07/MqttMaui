@@ -529,6 +529,7 @@
         SelectedClient = client;
         PubType = client.MqttClientModel.QosType;
         SubType = client.MqttClientModel.QosType;
+        SelectedSubscriber = new PublisherSubscriber(); 
     }
 
     bool IsSubSelected(PublisherSubscriber sub)
@@ -680,7 +681,6 @@
     {
         if (SelectedClient.IsConnected)
         {
-            SelectedClient.MqttConnector.Subscribe(subtopicName, SubType);
             if (!PublisherSubscriber.PublisherSubscribers.Any(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId))
             {
                 PublisherSubscriber.PublisherSubscribers.Add(new PublisherSubscriber { Id = PublisherSubscriber.PublisherSubscribers.Count + 1, IsSubscribed = true, TopicName = subtopicName, ClientId = SelectedClient.MqttClientModel.ClientId, QosType = SubType, topicType = TopicType.Subscriber, RecievedMessages = new List<RecievedMessage>() });
@@ -689,6 +689,7 @@
             {
                 PublisherSubscriber.PublisherSubscribers.Where(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.QosType = SubType);
             }
+            SelectedClient.MqttConnector.Subscribe(subtopicName, SubType);
             IsSubOpen = false;
         }
 
