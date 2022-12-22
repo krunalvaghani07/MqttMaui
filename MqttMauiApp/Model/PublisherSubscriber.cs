@@ -62,4 +62,10 @@ namespace MqttMauiApp.Model
         Atleast,
         Exactly
     }
+    public enum MessageType
+    {
+        All,
+        Recieved,
+        Published
+    }
 }
