@@ -155,7 +155,7 @@
     <div class="" style="height:100vh;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
         <div class="d-flex flex-fill">
             <h4 class="p-2 w-100 bd-highlight"><b>Connections</b></h4>
-            <a class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center"><span class="fa fa-plus-circle"></span> </a>
+            <a class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="() => OpenClientModal(false)"><span class="fa fa-plus-circle"></span> </a>
         </div>
         <div class="list-group" style="margin-right:10px;justify-content: flex-start;">
             @foreach (var client in mqttClientConnector)
@@ -196,7 +196,7 @@
                         {
                             <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
                         }
-                        <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o"></span> </a>
+                        <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o" @onclick="()=>OpenClientModal(true)"></span> </a>
                     </h4>
                 </div>
             </div>
@@ -236,9 +236,8 @@
                                 @*  <span><i class="fas fa-cog"></i></span>*@
                             </div>
                         </header>
-
                         <main class="msger-chat">
-                            @foreach (var msg in ArrangeMsg())
+                            @foreach (var msg in ArrangeMsg().Where(m => m.ClientId == SelectedClient.MqttClientModel.ClientId))
                             {
                                 if (msg.topicType == TopicType.Publisher)
                                 {
@@ -259,7 +258,7 @@
                                     <div>
                                         <small style="font-size: 0.85em;flex-direction: row-reverse;float:right;">@msg.SendRecTime</small>
                                     </div>
-                                    <br/>
+                                    <br />
                                 }
                                 else
                                 {
@@ -333,7 +332,7 @@
                 <EditForm Model="SelectedClient.MqttClientModel">
                     <div class="modal-header">
                         <h5 class="modal-title"> New Subscription</h5>
-                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseSubModal">
+                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
                             <span class="fa fa-remove"></span>
                         </button>
                     </div>
@@ -356,7 +355,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-primary" data-save="modal" @onclick="AddSubscriber">Save</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseSubModal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
                     </div>
                 </EditForm>
             </div>
@@ -364,6 +363,105 @@
     </div>
 }
 
+@if (IsClientOpen)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <EditForm Model="AddEditClient" OnSubmit="SaveClientSetting">
+                    <div class="modal-header">
+                        @if (AddEditClient.ClientId != null)
+                        {
+                            <h5 class="modal-title"> Edit Client Setting</h5>
+                        }
+                        else
+                        {
+                            <h5 class="modal-title"> Add New Client</h5>
+                        }
+                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
+                            <span class="fa fa-remove"></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Client Name</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" class="form-control" @bind-value="AddEditClient.ClientName" placeholder="Name" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Protocol</label>
+                            </div>
+                            <div class="col-9">
+                                <InputSelect class="form-control" @bind-Value="AddEditClient.Type">
+
+                                    @foreach (var ptype in Enum.GetValues(typeof(ProtocolType)))
+                                    {
+                                        <option value="@ptype">@ptype</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Host</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" class="form-control" @bind-value="AddEditClient.Host" placeholder="Host" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Port</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="number" class="form-control" @bind-value="AddEditClient.Port" placeholder="Port" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Username</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" class="form-control" @bind-value="AddEditClient.UserName" placeholder="UserName" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Password</label>
+                            </div>
+                            <div class="col-9">
+                                <input type="text" class="form-control" @bind-value="AddEditClient.Password" placeholder="Password" required>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <label>Will - Qos</label>
+                            </div>
+                            <div class="col-9">
+                                <InputSelect class="form-control" @bind-Value="AddEditClient.QosType">
+
+                                    @foreach (var qos in Enum.GetValues(typeof(Qos)))
+                                    {
+                                        int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
+                                        <option value="@qos">@index - @qos Once</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary" data-save="modal">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
 
 
 @code {
@@ -373,11 +471,51 @@
     Qos PubType;
     Qos SubType;
     bool IsSubOpen = false;
+    bool IsClientOpen = false;
     List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
     string ConfigFilePath;
 
     MqttModelConnection SelectedClient = new MqttModelConnection();
+    MqttClientModel AddEditClient = new MqttClientModel();
     PublisherSubscriber SelectedSubscriber = new PublisherSubscriber();
+
+    protected async Task SaveClientSetting()
+    {
+        if (AddEditClient.ClientId != null)
+        {
+            var removeold = MqttClientModel.mqttClients.Where(s => s.ClientId == AddEditClient.ClientId).FirstOrDefault();
+            MqttClientModel.mqttClients.Remove(removeold);
+            var removeconnector = mqttClientConnector.Where(r => r.MqttClientModel.ClientId == AddEditClient.ClientId).FirstOrDefault();
+            removeconnector.MqttConnector.Disconnect();
+            mqttClientConnector.Remove(removeconnector);
+        }
+        else
+        {
+            AddEditClient.ClientId = "EMQX_" + Guid.NewGuid().ToString();
+        }
+        MqttClientModel.mqttClients.Add(AddEditClient);
+        ConnectToMqtt(AddEditClient);
+        SelectedClient = mqttClientConnector.Where(r => r.MqttClientModel.ClientId == AddEditClient.ClientId).FirstOrDefault();
+        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+        if (File.Exists(MqttClientModel.ConfigPath))
+        {
+            File.Delete(MqttClientModel.ConfigPath);
+        }
+        File.WriteAllText(MqttClientModel.ConfigPath, json);
+        IsClientOpen = false;
+        StateHasChanged();
+    }
+
+    private void OpenClientModal(bool flag)
+    {
+        AddEditClient = new MqttClientModel();
+        if (flag)
+        {
+            AddEditClient = SelectedClient.MqttClientModel;
+        }
+        IsClientOpen = true;
+        StateHasChanged();
+    }
 
     bool IsClientSelected(MqttModelConnection client)
         => SelectedClient == client;
@@ -407,7 +545,15 @@
     protected override async Task OnInitializedAsync()
     {
         LoadClients();
-        ConnectToMqtt();
+        if (MqttClientModel.mqttClients.Count > 0)
+        {
+            mqttClientConnector.Clear();
+            foreach (var clientmodel in MqttClientModel.mqttClients)
+            {
+                ConnectToMqtt(clientmodel);
+            }
+
+        }
         if (mqttClientConnector.Count > 0)
         {
             SelectedClient = mqttClientConnector[0];
@@ -449,47 +595,41 @@
         MqttClientModel.ConfigPath = ConfigFilePath;
     }
 
-    private void ConnectToMqtt()
+    private void ConnectToMqtt(MqttClientModel clientmodel)
     {
-        mqttClientConnector.Clear();
-        if (MqttClientModel.mqttClients.Count > 0)
+        var clientModel = clientmodel;
+        var mqttconnector = new MqttConnector(clientmodel);
+        var client = mqttconnector.Connect(clientmodel);
+        mqttClientConnector.Add(new MqttModelConnection() { MqttConnector = mqttconnector, Client = client, MqttClientModel = clientmodel, IsConnected = false });
+        client.ConnectedAsync += async e =>
         {
-            foreach (var clientmodel in MqttClientModel.mqttClients)
+            mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now; });
+            await InvokeAsync(() =>
             {
-                var mqttconnector = new MqttConnector(clientmodel);
-                var client = mqttconnector.Connect(clientmodel);
-                mqttClientConnector.Add(new MqttModelConnection() { MqttConnector = mqttconnector, Client = client, MqttClientModel = clientmodel, IsConnected = false });
-                client.ConnectedAsync += async e =>
-                {
-                    mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = true; ch.LastConnected = DateTime.Now; });
-                    await InvokeAsync(() =>
-                    {
-                        StateHasChanged();
-                    });
-                };
-                client.DisconnectedAsync += async e =>
-               {
-                   mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; });
-                   await InvokeAsync(() =>
-                   {
-                       StateHasChanged();
-                   });
-               };
-                mqttconnector.StartConnecting();
-                client.ApplicationMessageReceivedAsync += async e =>
-                 {
-                     PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == e.ApplicationMessage.Topic &&
-                          ps.IsSubscribed == true
-                     //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
-                     ).ToList().
-                          ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
-                     await InvokeAsync(() =>
-                     {
-                         StateHasChanged();
-                     });
-                 };
-            }
-        }
+                StateHasChanged();
+            });
+        };
+        client.DisconnectedAsync += async e =>
+       {
+           mqttClientConnector.Where(m => m.MqttClientModel == clientmodel).ToList().ForEach(ch => { ch.IsConnected = false; });
+           await InvokeAsync(() =>
+           {
+               StateHasChanged();
+           });
+       };
+        mqttconnector.StartConnecting();
+        client.ApplicationMessageReceivedAsync += async e =>
+         {
+             PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == e.ApplicationMessage.Topic &&
+                  ps.IsSubscribed == true && ps.ClientId == clientModel.ClientId
+             //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
+             ).ToList().
+                  ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
+             await InvokeAsync(() =>
+             {
+                 StateHasChanged();
+             });
+         };
     }
 
     private void Disconnect()
@@ -512,16 +652,17 @@
         StateHasChanged();
     }
 
-    private void CloseSubModal()
+    private void CloseModals()
     {
         IsSubOpen = false;
+        IsClientOpen = false;
     }
 
     private void AddPublisher()
     {
         if (SelectedClient.IsConnected)
         {
-            if (PublisherSubscriber.PublisherSubscribers.Any(t => t.TopicName == pubtopicName && t.topicType == TopicType.Publisher))
+            if (PublisherSubscriber.PublisherSubscribers.Any(t => t.TopicName == pubtopicName && t.topicType == TopicType.Publisher && t.ClientId == SelectedClient.MqttClientModel.ClientId))
             {
                 PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == pubtopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.SentMessages.Add(new SentMessage(pubMsg, DateTime.Now, PubType)));
             }
@@ -564,37 +705,35 @@
     List<PublisherSubscriber> ArrangeMsg()
     {
         var lst = new List<PublisherSubscriber>();
-        if (SelectedClient.MqttClientModel.ClientId != null)
-        {
-            if (SelectedSubscriber.Id != 0)
-            {
-                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
-                var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.Id == SelectedSubscriber.Id && ps.topicType == TopicType.Subscriber && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
-                if (Send != null)
-                {
-                    Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
-                }
-                if (Rec != null)
-                {
-                    Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
-                }
-            }
-            else
-            {
-                var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Publisher && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
-                var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Subscriber && ps.ClientId == SelectedClient.MqttClientModel.ClientId).ToList();
-                if (Send != null)
-                {
-                    Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
-                }
-                if (Rec != null)
-                {
-                    Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
-                }
-            }
 
-            lst = lst.OrderByDescending(c => c.SendRecTime.Date).ThenBy(c => c.SendRecTime.TimeOfDay).ToList();
+        if (SelectedSubscriber.Id != 0)
+        {
+            var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher).ToList();
+            var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.Id == SelectedSubscriber.Id && ps.topicType == TopicType.Subscriber).ToList();
+            if (Send != null)
+            {
+                Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id,ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
+            }
+            if (Rec != null)
+            {
+                Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
+            }
         }
+        else
+        {
+            var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Publisher).ToList();
+            var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Subscriber).ToList();
+            if (Send != null)
+            {
+                Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
+            }
+            if (Rec != null)
+            {
+                Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
+            }
+        }
+
+        lst = lst.OrderByDescending(c => c.SendRecTime.Date).ThenBy(c => c.SendRecTime.TimeOfDay).ToList();
 
         return lst;
     }
@@ -605,7 +744,8 @@
         StateHasChanged();
     }
 
-    private void DeleteSub(PublisherSubscriber subscriber){
+    private void DeleteSub(PublisherSubscriber subscriber)
+    {
         PublisherSubscriber.PublisherSubscribers.Remove(subscriber);
         StateHasChanged();
     }
