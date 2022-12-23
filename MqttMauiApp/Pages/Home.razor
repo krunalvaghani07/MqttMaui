@@ -568,6 +568,7 @@
             SubType = mqttClientConnector[0].MqttClientModel.QosType;
         }
         Serializer.DeserializeList();
+        PublisherSubscriber.PublisherSubscribers.ForEach(ch => ch.IsSubscribed = false);
         StateHasChanged();
     }
 
