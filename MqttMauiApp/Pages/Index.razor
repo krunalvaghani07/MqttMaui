@@ -156,14 +156,16 @@
     <div class="" style="height:100vh;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
         <div class="d-flex flex-fill">
             <h4 class="p-2 w-100 bd-highlight"><b>Connections</b></h4>
-            <a class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="() => OpenClientModal(false)"><span class="fa fa-plus-circle"></span> </a>
+            <a title="Import" class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="OpenFilePicker"><span class="fa fa-sign-in"></span></a>
+            <a title="Export" class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="ExportJson"><span class="fa fa-print"></span></a>
+            <a title="Add New" class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="() => OpenClientModal(false)"><span class="fa fa-plus-circle"></span> </a>
         </div>
         <div class="list-group" style="margin-right:10px;justify-content: flex-start;">
             @foreach (var client in mqttClientConnector)
             {
                 var host = client.MqttClientModel.ClientName + "@" + client.MqttClientModel.Host;
-                <div style="border-radius: 8px;height:40px;cursor: pointer; @DivClientStyle(client)" @onclick="() => SetClientSelect(client)">
-                    <button title="@host" data-toggle="tooltip" data-placement="top" style="max-width:200px;@DivClientStyle(client)" class="d-flex justify-content-start text-truncate border-0">
+                <div class="d-flex" style="border-radius: 8px;height:40px;cursor: pointer; @DivClientStyle(client)" @onclick="() => SetClientSelect(client)">
+                    <button title="@host" data-toggle="tooltip" data-placement="top" style="border-radius: 8px;max-width:200px;@DivClientStyle(client)" class="d-flex justify-content-start text-truncate border-0">
                         @if (client.IsConnected)
                         {
                             <span class="fa fa-circle" style="color:green;margin-left:10px;margin-top:10px"></span>
@@ -198,6 +200,7 @@
                             <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
                         }
                         <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o" @onclick="()=>OpenClientModal(true)"></span> </a>
+                        <a title="Delete" class="btn btn-link text-danger" style="float:right;" @onclick="() => Delete(SelectedClient.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></a>
                     </h4>
                 </div>
             </div>
@@ -643,6 +646,93 @@
          };
     }
 
+    private async void OpenFilePicker()
+    {
+        var jsonFileType = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>{
+                { DevicePlatform.iOS, new[] { ".JSON" } },
+                { DevicePlatform.Android, new[] { "application/JSON" } },
+                { DevicePlatform.WinUI, new[] { ".json" } },
+                { DevicePlatform.Tizen, new[] { ".JSON" } },
+                { DevicePlatform.macOS, new[] { "json" } },
+        });
+        var result = await FilePicker.PickAsync(new PickOptions
+            {
+                FileTypes = jsonFileType,
+                PickerTitle = "Select Config(json)File"
+            });
+        if (result == null)
+        {
+            return;
+        }
+        else
+        {
+            var stream = await result.OpenReadAsync();
+            MqttClientModel.mqttClients = await System.Text.Json.JsonSerializer.DeserializeAsync<List<MqttClientModel>>(stream);
+            ConfigFilePath = result.FullPath;
+            MqttClientModel.ConfigPath = ConfigFilePath;
+            if (MqttClientModel.mqttClients.Count > 0)
+            {
+                mqttClientConnector.Clear();
+                foreach (var clientmodel in MqttClientModel.mqttClients)
+                {
+                    ConnectToMqtt(clientmodel);
+                }
+
+            }
+            if (mqttClientConnector.Count > 0)
+            {
+                SelectedClient = mqttClientConnector[0];
+                PubType = mqttClientConnector[0].MqttClientModel.QosType;
+                SubType = mqttClientConnector[0].MqttClientModel.QosType;
+            }
+            string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+            string configpathsave = $@"{mainDir}\wwwroot\clientconfig.txt";
+            if (File.Exists(configpathsave))
+            {
+                File.Delete(configpathsave);
+            }
+            File.WriteAllText(configpathsave, MqttClientModel.ConfigPath);
+            StateHasChanged();
+        }
+    }
+
+    private async void ExportJson()
+    {
+
+        var pickedFolder = await FolderPicker.PickFolder();
+
+        if (pickedFolder == null)
+        {
+            return;
+        }
+        else
+        {
+            string path = pickedFolder;
+            string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+            File.WriteAllText($@"{path}\client.json", json);
+        }
+
+    }
+
+    private void Delete(MqttClientModel client)
+    {
+        MqttClientModel.mqttClients.Remove(client);
+        mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
+        string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
+        if (File.Exists(ConfigFilePath))
+        {
+            File.Delete(ConfigFilePath);
+        }
+        File.WriteAllText(ConfigFilePath, json);
+        if (mqttClientConnector.Count > 0)
+        {
+            SelectedClient = mqttClientConnector[0];
+            PubType = mqttClientConnector[0].MqttClientModel.QosType;
+            SubType = mqttClientConnector[0].MqttClientModel.QosType;
+            InvokeAsync(StateHasChanged);
+        }
+        StateHasChanged();
+    }
     #region For Toggling Client
 
     bool IsClientSelected(MqttModelConnection client)
