@@ -184,8 +184,8 @@
     @if (SelectedClient.MqttClientModel != null)
     {
         <div class="d-flex flex-column" style="width:100%;">
-            <div class="row" style="height:5vh;border-bottom: 2px solid grey;">
-                <div class="d-flex flex-fill">
+            <div class="row text-center" style="height:6vh;border-bottom: 2px solid grey;">
+                <div class="d-flex text-center flex-fill">
                     <h4 class="" style="color:rgb(2, 48, 32);margin:5px">
                         <b>
                             @SelectedClient.MqttClientModel.ClientName
@@ -204,7 +204,7 @@
                     </h4>
                 </div>
             </div>
-            <div style="height:95vh;" class="d-flex">
+            <div style="height:94vh;" class="d-flex">
                 <div class="card border-0" style="height:100%;width:350px;background:white;border-right: 1px solid black;">
                     <div class="card-header text-center border-0" style="background:white;">
                         <button type="button" class="btn btn-outline-success" @onclick="OpenSubModal"><span class="fa fa-plus"></span> New Subscription</button>
