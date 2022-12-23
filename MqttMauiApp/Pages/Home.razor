@@ -567,6 +567,7 @@
             PubType = mqttClientConnector[0].MqttClientModel.QosType;
             SubType = mqttClientConnector[0].MqttClientModel.QosType;
         }
+        Serializer.DeserializeList();
         StateHasChanged();
     }
 
@@ -809,11 +810,11 @@
         {
             var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.topicType == TopicType.Publisher).ToList();
             var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.TopicName == SelectedSubscriber.TopicName && ps.Id == SelectedSubscriber.Id && ps.topicType == TopicType.Subscriber).ToList();
-            if (Send != null)
+            if (Send.Count > 0)
             {
                 Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
             }
-            if (Rec != null)
+            if (Rec.Count > 0)
             {
                 Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
             }
@@ -822,11 +823,11 @@
         {
             var Send = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Publisher).ToList();
             var Rec = PublisherSubscriber.PublisherSubscribers.Where(ps => ps.topicType == TopicType.Subscriber).ToList();
-            if (Send != null)
+            if (Send.Count > 0)
             {
                 Send.ForEach(sl => sl.SentMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Publisher, QosType = s.QOS, PublishMessage = s.Msg, SendRecTime = s.PubTime })));
             }
-            if (Rec != null)
+            if (Rec.Count > 0)
             {
                 Rec.ForEach(sl => sl.RecievedMessages.ForEach(s => lst.Add(new PublisherSubscriber() { Id = sl.Id, ClientId = sl.ClientId, TopicName = sl.TopicName, topicType = TopicType.Subscriber, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }))); //{ topicType = TopicType.Subscriber, QosType = Rec.QosType, RecQOS = s.QOS, isRetain = s.Msg.Retain, PublishMessage = System.Text.Encoding.UTF8.GetString(s.Msg.Payload), SendRecTime = s.RecTime }));
             }

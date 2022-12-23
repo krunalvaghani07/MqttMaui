@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Maui.LifecycleEvents;
 using MqttMauiApp.Data;
 using MqttMauiApp.Interfaces;
 
@@ -33,6 +34,16 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<WeatherForecastService>();
 
-		return builder.Build();
+        builder.ConfigureLifecycleEvents(AppLifecycle => {
+#if WINDOWS
+        AppLifecycle
+         .AddWindows(windows =>
+           windows.OnClosed((app, args) => {
+             Serializer.SerializeList();
+           }));
+#endif
+        });
+
+        return builder.Build();
 	}
 }

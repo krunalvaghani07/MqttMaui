@@ -24,7 +24,7 @@ namespace MqttMauiApp.Model
         public bool isRetain { get; set; }
         public MqttQualityOfServiceLevel RecQOS { get; set; }
     }
-    public struct SentMessage
+    public class SentMessage
     {
         public SentMessage(string msg, DateTime time, Qos qos)
         {
@@ -32,13 +32,13 @@ namespace MqttMauiApp.Model
             PubTime = time;
             QOS = qos;
         }
-
-        public string Msg { get; private set; }
-        public DateTime PubTime { get; private set; }
+        public string PubTimeString { get { return this.PubTime.ToString("dd/MM/yyyy HH:mm:ss"); } }
+        public string Msg { get;  set; }
+        public DateTime PubTime { get;  set; }
         public Qos QOS { get;  set; }
        
     }
-    public struct RecievedMessage
+    public class RecievedMessage
     {
         public RecievedMessage(MqttApplicationMessage msg, DateTime time, MqttQualityOfServiceLevel qos)
         {
@@ -48,8 +48,8 @@ namespace MqttMauiApp.Model
         }
         public MqttQualityOfServiceLevel QOS { get;  set; }
 
-        public MqttApplicationMessage Msg { get; private set; }
-        public DateTime RecTime { get; private set; }
+        public MqttApplicationMessage Msg { get;  set; }
+        public DateTime RecTime { get;  set; }
     }
     public enum TopicType
     {
