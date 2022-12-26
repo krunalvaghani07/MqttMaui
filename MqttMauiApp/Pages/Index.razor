@@ -926,7 +926,7 @@
             }
         }
 
-        lst = lst.OrderByDescending(c => c.SendRecTime.Date).ThenBy(c => c.SendRecTime.TimeOfDay).ToList();
+        lst = lst.OrderBy(c => c.SendRecTime.Date).ThenBy(c => c.SendRecTime.TimeOfDay).ToList();
 
         return lst;
     }
