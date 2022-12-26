@@ -41,6 +41,13 @@ public static class MauiProgram
            windows.OnClosed((app, args) => {
              Serializer.SerializeList();
            }));
+#elif ANDROID
+            AppLifecycle.AddAndroid(android => android
+               .OnStop((activity) => Serializer.SerializeList()));
+#elif IOS || MACCATALYST
+ AppLifecycle.AddiOS(ios => ios
+          .WillTerminate((app) =>  Serializer.SerializeList())
+       );
 #endif
         });
 
