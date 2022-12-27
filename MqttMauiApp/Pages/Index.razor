@@ -691,10 +691,10 @@
             }
             string mainDir = MqttClientModel.MainDirPath;
             string configpathsave = $@"{mainDir}//wwwroot//clientconfig.txt";
-            if (File.Exists(configpathsave))
-            {
-                File.Delete(configpathsave);
-            }
+            //if (File.Exists(configpathsave))
+            //{
+            //    File.Delete(configpathsave);
+            //}
             File.WriteAllText(configpathsave, MqttClientModel.ConfigPath);
             StateHasChanged();
         }
@@ -723,10 +723,10 @@
         MqttClientModel.mqttClients.Remove(client);
         mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists(ConfigFilePath))
-        {
-            File.Delete(ConfigFilePath);
-        }
+        //if (File.Exists(ConfigFilePath))
+        //{
+        //    File.Delete(ConfigFilePath);
+        //}
         File.WriteAllText(ConfigFilePath, json);
         if (mqttClientConnector.Count > 0)
         {
@@ -807,10 +807,10 @@
         ConnectToMqtt(AddEditClient);
         SelectedClient = mqttClientConnector.Where(r => r.MqttClientModel.ClientId == AddEditClient.ClientId).FirstOrDefault();
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists(MqttClientModel.ConfigPath))
-        {
-            File.Delete(MqttClientModel.ConfigPath);
-        }
+        //if (File.Exists(MqttClientModel.ConfigPath))
+        //{
+        //    File.Delete(MqttClientModel.ConfigPath);
+        //}
         File.WriteAllText(MqttClientModel.ConfigPath, json);
         IsClientOpen = false;
         StateHasChanged();

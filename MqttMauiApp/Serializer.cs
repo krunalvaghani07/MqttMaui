@@ -15,10 +15,10 @@ namespace MqttMauiApp
         {
             string mainDir = MqttClientModel.MainDirPath;
             string json = JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers);
-            if (File.Exists($"{mainDir}//wwwroot//PubSubclient.json"))
-            {
-                File.Delete($"{mainDir}//wwwroot//PubSubclient.json");
-            }
+            //if (File.Exists($"{mainDir}//wwwroot//PubSubclient.json"))
+            //{
+            //    File.Delete($"{mainDir}//wwwroot//PubSubclient.json");
+            //}
             File.WriteAllText($"{mainDir}//wwwroot//PubSubclient.json", json);
         }
         public static void DeserializeList()
