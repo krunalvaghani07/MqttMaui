@@ -19,13 +19,13 @@ namespace MqttMauiApp
             //{
             //    File.Delete($"{mainDir}//wwwroot//PubSubclient.json");
             //}
-            File.WriteAllText($"{mainDir}//wwwroot//PubSubclient.json", json);
+            //File.WriteAllText($"{mainDir}//wwwroot//PubSubclient.json", json);
         }
         public static void DeserializeList()
         {
             try
             {
-                string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+                string mainDir = MqttClientModel.MainDirPath;
                 if (File.Exists($"{mainDir}//wwwroot//PubSubclient.json"))
                 {
                     string data = File.ReadAllText($"{mainDir}//wwwroot//PubSubclient.json");

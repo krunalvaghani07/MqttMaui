@@ -949,6 +949,7 @@
     private void DeleteSub(PublisherSubscriber subscriber)
     {
         PublisherSubscriber.PublisherSubscribers.Remove(subscriber);
+        File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
         StateHasChanged();
     }
 
