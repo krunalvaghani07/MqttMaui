@@ -154,7 +154,7 @@
 
 <div class="d-flex p-0">
     <div class="row" style="width:80px;background:black;padding-right:5px;">
-       @* <NavMenu />*@
+        @* <NavMenu />*@
     </div>
     <div class="" style="height:100vh;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
 
@@ -584,9 +584,9 @@
     private void LoadClients()
     {
         string mainDir = MqttClientModel.MainDirPath;
-        if (File.Exists($@"{mainDir}\wwwroot\clientconfig.txt"))
+        if (File.Exists($@"{mainDir}//wwwroot//clientconfig.txt"))
         {
-            var path = File.ReadAllText($@"{mainDir}\wwwroot\clientconfig.txt");
+            var path = File.ReadAllText($@"{mainDir}//wwwroot//clientconfig.txt");
             if (File.Exists(path))
             {
                 ConfigFilePath = path;
@@ -595,17 +595,17 @@
             }
             else
             {
-                ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+                ConfigFilePath = $@"{mainDir}//wwwroot//client.json";
                 var data = File.ReadAllText(ConfigFilePath);
                 MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
             }
         }
         else
         {
-            ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
-            if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+            ConfigFilePath = $@"{mainDir}//wwwroot//client.json";
+            if (File.Exists($@"{mainDir}//wwwroot//client.json"))
             {
-                var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+                var data = File.ReadAllText($@"{mainDir}//wwwroot//client.json");
                 MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
                 //mqttClientModels = MqttClientModel.mqttClients;
             }
@@ -690,7 +690,7 @@
                 SubType = mqttClientConnector[0].MqttClientModel.QosType;
             }
             string mainDir = MqttClientModel.MainDirPath;
-            string configpathsave = $@"{mainDir}\wwwroot\clientconfig.txt";
+            string configpathsave = $@"{mainDir}//wwwroot//clientconfig.txt";
             if (File.Exists(configpathsave))
             {
                 File.Delete(configpathsave);
@@ -713,7 +713,7 @@
         {
             string path = pickedFolder;
             string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-            File.WriteAllText($@"{path}\client.json", json);
+            File.WriteAllText($@"{path}//client.json", json);
         }
 
     }

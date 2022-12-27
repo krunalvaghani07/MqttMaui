@@ -63,7 +63,7 @@ namespace MqttMauiApp
                         _options = TcpMqttClientOptions(mqttClientModel);
                         break;
                     case ProtocolType.mqtt_tls:
-                        _options = TlsMqttClientOptions(mqttClientModel, $@"{path}\wwwroot\broker.emqx.io-ca.crt");
+                        _options = TlsMqttClientOptions(mqttClientModel, $@"{path}//wwwroot//broker.emqx.io-ca.crt");
                         break;
                     case ProtocolType.ws:
                         _options = WsMqttClientOptions(mqttClientModel);
@@ -71,7 +71,7 @@ namespace MqttMauiApp
                     case ProtocolType.wss:
                         _options = WssMqttClientOptions(
                            mqttClientModel,
-                            $@"{path}\wwwroot\broker.emqx.io-ca.crt"
+                            $@"{path}//wwwroot//broker.emqx.io-ca.crt"
                         );
                         break;
                 }

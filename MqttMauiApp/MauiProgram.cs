@@ -28,7 +28,7 @@ public static class MauiProgram
         MqttClientModel.MainDirPath = AppDomain.CurrentDomain.BaseDirectory;
 #elif MACCATALYST
 		builder.Services.AddTransient<IFolderPicker, Platforms.MacCatalyst.FolderPicker>();
-         MqttClientModel.MainDirPath = AppDomain.CurrentDomain.BaseDirectory.Replace("Monobundle", "Resources");;
+         MqttClientModel.MainDirPath = AppDomain.CurrentDomain.BaseDirectory.Replace("MonoBundle", "Resources");;
 #endif
 
         builder.Services.AddTransient<MainPage>();
