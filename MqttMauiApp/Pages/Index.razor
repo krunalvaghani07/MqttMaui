@@ -204,7 +204,7 @@
                             <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
                         }
                         <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o" @onclick="()=>OpenClientModal(true)"></span> </a>
-                        <a title="Delete" class="btn btn-link text-danger" style="float:right;" @onclick="() => Delete(SelectedClient.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></a>
+                        <a title="Delete" class="btn btn-link text-danger" style="float:right;" @onclick="() => DeleteModalOpen(SelectedClient.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></a>
                     </h4>
                 </div>
             </div>
@@ -403,41 +403,7 @@
 
 @if (IsSubOpen)
 {
-    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <EditForm Model="SelectedClient.MqttClientModel">
-                    <div class="modal-header">
-                        <h5 class="modal-title"> New Subscription</h5>
-                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
-                            <span class="fa fa-remove"></span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div>Topic Name</div>
-                        <div>
-                            <input type="text" class="form-control" @bind-value="subtopicName" required>
-                        </div>
-                        <div>Qos</div>
-                        <div>
-                            <InputSelect class="form-control" @bind-Value="SubType">
-
-                                @foreach (var qos in Enum.GetValues(typeof(Qos)))
-                                {
-                                    int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
-                                    <option value="@qos">@index - @qos Once</option>
-                                }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" data-save="modal" @onclick="AddSubscriber">Save</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
-                    </div>
-                </EditForm>
-            </div>
-        </div>
-    </div>
+    
 }
 
 @if (IsClientOpen)
@@ -540,6 +506,31 @@
     </div>
 }
 
+@if (IsDeleteClientOpen)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <EditForm Model="SelectedClient.MqttClientModel">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-center"> Are you sure?</h5>
+                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
+                            <span class="fa fa-remove"></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Do you really want to delete "@DeleteClient.ClientName" client? This process cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger" data-save="modal" @onclick="() =>DeleteSelectedClient(DeleteClient)">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
 
@@ -550,11 +541,13 @@
     Qos SubType;
     bool IsSubOpen = false;
     bool IsClientOpen = false;
+    bool IsDeleteClientOpen = false;
     List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
     string ConfigFilePath;
 
     MqttModelConnection SelectedClient = new MqttModelConnection();
     MqttClientModel AddEditClient = new MqttClientModel();
+    MqttClientModel DeleteClient = new MqttClientModel();
     PublisherSubscriber SelectedSubscriber = new PublisherSubscriber();
     string SelectedMsgType = "All";
 
@@ -645,10 +638,10 @@
                   ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
              File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
 
-                  await InvokeAsync(() =>
-             {
-                 StateHasChanged();
-             });
+             await InvokeAsync(() =>
+    {
+        StateHasChanged();
+    });
          };
     }
 
@@ -720,8 +713,15 @@
 
     }
 
-    private void Delete(MqttClientModel client)
+    private void DeleteModalOpen(MqttClientModel client){
+        IsDeleteClientOpen = true;
+        DeleteClient = client;
+        StateHasChanged();
+    }
+
+    private void DeleteSelectedClient(MqttClientModel client)
     {
+        
         MqttClientModel.mqttClients.Remove(client);
         mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
@@ -737,6 +737,7 @@
             SubType = mqttClientConnector[0].MqttClientModel.QosType;
             InvokeAsync(StateHasChanged);
         }
+        IsDeleteClientOpen = false;
         StateHasChanged();
     }
     #region For Toggling Client
@@ -853,6 +854,7 @@
     {
         IsSubOpen = false;
         IsClientOpen = false;
+        IsDeleteClientOpen = false;
     }
 
     private void AddPublisher()

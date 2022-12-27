@@ -14,8 +14,8 @@ namespace MqttMauiApp
 {
     public class MqttConnector
     {
-        public  IMqttClient _client;
-        public  MqttClientOptions _options;
+        public IMqttClient _client;
+        public MqttClientOptions _options;
         private readonly MqttClientModel mqtt;
         private MqttFactory factory;
         public Thread ConnectionThread;
@@ -33,21 +33,21 @@ namespace MqttMauiApp
             }
             catch (Exception ex)
             {
-                
+
             }
         }
         public void ConnectMqttClient()
         {
-            try
+            while (!_client.IsConnected)
             {
-                while (!_client.IsConnected)
+                try
                 {
                     _client.ConnectAsync(_options).Wait();
                 }
-            }
-            catch (Exception ex)
-            {
+                catch (Exception ex)
+                {
 
+                }
             }
         }
         public IMqttClient Connect(MqttClientModel mqttClientModel)
@@ -55,7 +55,7 @@ namespace MqttMauiApp
             try
             {
                 string path = MqttClientModel.MainDirPath;
-                 factory = new MqttFactory();
+                factory = new MqttFactory();
                 _client = factory.CreateMqttClient();
                 switch (mqttClientModel.Type)
                 {
@@ -75,10 +75,10 @@ namespace MqttMauiApp
                         );
                         break;
                 }
-              return  _client;
+                return _client;
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("Error");
                 return _client;
@@ -89,44 +89,44 @@ namespace MqttMauiApp
             try
             {
                 var mqttClientDisconnectOptions = factory.CreateClientDisconnectOptionsBuilder().Build();
-                 _client.DisconnectAsync(mqttClientDisconnectOptions, CancellationToken.None);
-              // _client.Dispose();
+                _client.DisconnectAsync(mqttClientDisconnectOptions, CancellationToken.None);
+                // _client.Dispose();
             }
-           catch(Exception ex)
+            catch (Exception ex)
             {
 
             }
         }
-        public void PublishTopic(string topicname,string message,Qos qos)
+        public void PublishTopic(string topicname, string message, Qos qos)
         {
-            if(message != null)
+            if (message != null)
             {
                 MqttApplicationMessage sendmessage;
                 switch (qos)
                 {
                     case Qos.Atleast:
-                         sendmessage = new MqttApplicationMessageBuilder()
-                           .WithTopic(topicname)
-                           .WithPayload(message)
-                           .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
-                           .WithRetainFlag()
-                           .Build();
+                        sendmessage = new MqttApplicationMessageBuilder()
+                          .WithTopic(topicname)
+                          .WithPayload(message)
+                          .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                          .WithRetainFlag()
+                          .Build();
                         break;
                     case Qos.Atmost:
-                         sendmessage = new MqttApplicationMessageBuilder()
-                           .WithTopic(topicname)
-                           .WithPayload(message)
-                           .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce)
-                           .WithRetainFlag()
-                           .Build();
+                        sendmessage = new MqttApplicationMessageBuilder()
+                          .WithTopic(topicname)
+                          .WithPayload(message)
+                          .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtMostOnce)
+                          .WithRetainFlag()
+                          .Build();
                         break;
                     case Qos.Exactly:
-                         sendmessage = new MqttApplicationMessageBuilder()
-                           .WithTopic(topicname)
-                           .WithPayload(message)
-                           .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
-                           .WithRetainFlag()
-                           .Build();
+                        sendmessage = new MqttApplicationMessageBuilder()
+                          .WithTopic(topicname)
+                          .WithPayload(message)
+                          .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.ExactlyOnce)
+                          .WithRetainFlag()
+                          .Build();
                         break;
                     default:
                         sendmessage = new MqttApplicationMessageBuilder()
@@ -138,14 +138,14 @@ namespace MqttMauiApp
                         break;
 
                 }
-               
+
                 if (_client.IsConnected)
                 {
 
                     _client.PublishAsync(sendmessage);
                 }
             }
-           
+
 
         }
         public bool Subscribe(string topicname, Qos qos)
