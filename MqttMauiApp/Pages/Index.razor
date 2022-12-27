@@ -583,7 +583,7 @@
 
     private void LoadClients()
     {
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+        string mainDir = MqttClientModel.MainDirPath;
         if (File.Exists($@"{mainDir}\wwwroot\clientconfig.txt"))
         {
             var path = File.ReadAllText($@"{mainDir}\wwwroot\clientconfig.txt");
@@ -689,7 +689,7 @@
                 PubType = mqttClientConnector[0].MqttClientModel.QosType;
                 SubType = mqttClientConnector[0].MqttClientModel.QosType;
             }
-            string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+            string mainDir = MqttClientModel.MainDirPath;
             string configpathsave = $@"{mainDir}\wwwroot\clientconfig.txt";
             if (File.Exists(configpathsave))
             {

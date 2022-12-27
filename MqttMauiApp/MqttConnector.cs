@@ -54,7 +54,7 @@ namespace MqttMauiApp
         {
             try
             {
-                string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string path = MqttClientModel.MainDirPath;
                  factory = new MqttFactory();
                 _client = factory.CreateMqttClient();
                 switch (mqttClientModel.Type)
