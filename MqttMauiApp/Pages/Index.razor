@@ -164,7 +164,7 @@
             <a title="Export" class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="ExportJson"><span class="fa fa-print"></span></a>
             <a title="Add New" class="p-2 flex-shrink-1 bd-highlight btn btn-link text-dark text-center" @onclick="() => OpenClientModal(false)"><span class="fa fa-plus-circle"></span> </a>
         </div>
-        <div class="list-group" style="margin-right:10px;justify-content: flex-start;">
+        <div class="list-group" style="margin-right:10px;margin-left:10px;justify-content: flex-start;">
             @foreach (var client in mqttClientConnector)
             {
                 var host = client.MqttClientModel.ClientName + "@" + client.MqttClientModel.Host;
