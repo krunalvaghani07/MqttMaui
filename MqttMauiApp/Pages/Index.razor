@@ -643,7 +643,9 @@
              //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
              ).ToList().
                   ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
-             await InvokeAsync(() =>
+             File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
+
+                  await InvokeAsync(() =>
              {
                  StateHasChanged();
              });
@@ -868,6 +870,7 @@
                     PublisherSubscriber.PublisherSubscribers.Add(new PublisherSubscriber { Id = PublisherSubscriber.PublisherSubscribers.Count + 1, TopicName = pubtopicName, ClientId = SelectedClient.MqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<SentMessage>() { new SentMessage(pubMsg, DateTime.Now, PubType) } });
                 }
                 SelectedClient.MqttConnector.PublishTopic(pubtopicName, pubMsg, PubType);
+                File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
             }
         }
         StateHasChanged();
@@ -886,6 +889,8 @@
                 PublisherSubscriber.PublisherSubscribers.Where(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.QosType = SubType);
             }
             SelectedClient.MqttConnector.Subscribe(subtopicName, SubType);
+            File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
+
             IsSubOpen = false;
         }
 
