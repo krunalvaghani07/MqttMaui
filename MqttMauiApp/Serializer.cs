@@ -13,24 +13,22 @@ namespace MqttMauiApp
     {
         public static void SerializeList()
         {
-            string mainDir = AppDomain.CurrentDomain.BaseDirectory;
+            string mainDir = MqttClientModel.MainDirPath;
             string json = JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers);
-            if (File.Exists($"{mainDir}\\wwwroot\\PubSubclient.json"))
-            {
-                File.Delete($"{mainDir}\\wwwroot\\PubSubclient.json");
-            }
-            File.WriteAllText($"{mainDir}\\wwwroot\\PubSubclient.json", json);
+            //if (File.Exists($"{mainDir}//wwwroot//PubSubclient.json"))
+            //{
+            //    File.Delete($"{mainDir}//wwwroot//PubSubclient.json");
+            //}
+            //File.WriteAllText($"{mainDir}//wwwroot//PubSubclient.json", json);
         }
         public static void DeserializeList()
         {
             try
             {
-                string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-                if (File.Exists($"{mainDir}\\wwwroot\\PubSubclient.json"))
+                string mainDir = MqttClientModel.MainDirPath;
+                if (File.Exists($"{mainDir}//wwwroot//PubSubclient.json"))
                 {
-                    string data = File.ReadAllText($"{mainDir}\\wwwroot\\PubSubclient.json");
-                    var format = "yyyy'-'MM'-'dd'T'HH':'mm':'ss.fffffffK"; // your datetime format
-                    var dateTimeConverter = new IsoDateTimeConverter { DateTimeFormat = format };
+                    string data = File.ReadAllText($"{mainDir}//wwwroot//PubSubclient.json");
                     if (data != "")
                     {
                         PublisherSubscriber.PublisherSubscribers = JsonConvert.DeserializeObject<List<PublisherSubscriber>>(data);

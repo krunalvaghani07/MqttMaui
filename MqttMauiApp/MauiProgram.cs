@@ -2,6 +2,7 @@
 using Microsoft.Maui.LifecycleEvents;
 using MqttMauiApp.Data;
 using MqttMauiApp.Interfaces;
+using MqttMauiApp.Model;
 
 namespace MqttMauiApp;
 
@@ -24,8 +25,10 @@ public static class MauiProgram
 
 #if WINDOWS
 		builder.Services.AddTransient<IFolderPicker, Platforms.Windows.FolderPicker>();
+        MqttClientModel.MainDirPath = AppDomain.CurrentDomain.BaseDirectory;
 #elif MACCATALYST
 		builder.Services.AddTransient<IFolderPicker, Platforms.MacCatalyst.FolderPicker>();
+         MqttClientModel.MainDirPath = AppDomain.CurrentDomain.BaseDirectory.Replace("MonoBundle", "Resources");;
 #endif
 
         builder.Services.AddTransient<MainPage>();

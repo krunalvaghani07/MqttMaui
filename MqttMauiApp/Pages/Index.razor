@@ -154,7 +154,7 @@
 
 <div class="d-flex p-0">
     <div class="row" style="width:80px;background:black;padding-right:5px;">
-       @* <NavMenu />*@
+        @* <NavMenu />*@
     </div>
     <div class="" style="height:100vh;width:320px;background:white;margin-right:10px;border-right: 2px solid green;box-shadow: 10px 0 5px -2px #888;">
 
@@ -204,7 +204,7 @@
                             <a title="Connect" @onclick="() => Connect()" class=" btn btn-link text-success text-center"><span class="fa fa-play"></span> </a>
                         }
                         <a class="p-2 btn btn-link text-dark text-center"><span class="fa fa-pencil-square-o" @onclick="()=>OpenClientModal(true)"></span> </a>
-                        <a title="Delete" class="btn btn-link text-danger" style="float:right;" @onclick="() => Delete(SelectedClient.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></a>
+                        <a title="Delete" class="btn btn-link text-danger" style="float:right;" @onclick="() => DeleteModalOpen(SelectedClient.MqttClientModel)"><span class="fa fa-trash-o fa-lg"></span></a>
                     </h4>
                 </div>
             </div>
@@ -403,41 +403,7 @@
 
 @if (IsSubOpen)
 {
-    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <EditForm Model="SelectedClient.MqttClientModel">
-                    <div class="modal-header">
-                        <h5 class="modal-title"> New Subscription</h5>
-                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
-                            <span class="fa fa-remove"></span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div>Topic Name</div>
-                        <div>
-                            <input type="text" class="form-control" @bind-value="subtopicName" required>
-                        </div>
-                        <div>Qos</div>
-                        <div>
-                            <InputSelect class="form-control" @bind-Value="SubType">
-
-                                @foreach (var qos in Enum.GetValues(typeof(Qos)))
-                                {
-                                    int index = (int)((Qos)Enum.Parse(typeof(Qos), qos.ToString()));
-                                    <option value="@qos">@index - @qos Once</option>
-                                }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary" data-save="modal" @onclick="AddSubscriber">Save</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
-                    </div>
-                </EditForm>
-            </div>
-        </div>
-    </div>
+    
 }
 
 @if (IsClientOpen)
@@ -540,6 +506,31 @@
     </div>
 }
 
+@if (IsDeleteClientOpen)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <EditForm Model="SelectedClient.MqttClientModel">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-center"> Are you sure?</h5>
+                        <button type="button" class="btn btn-link text-danger" data-dismiss="modal" aria-label="Close" @onclick="CloseModals">
+                            <span class="fa fa-remove"></span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Do you really want to delete "@DeleteClient.ClientName" client? This process cannot be undone.
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger" data-save="modal" @onclick="() =>DeleteSelectedClient(DeleteClient)">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CloseModals">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
 
@@ -550,11 +541,13 @@
     Qos SubType;
     bool IsSubOpen = false;
     bool IsClientOpen = false;
+    bool IsDeleteClientOpen = false;
     List<MqttModelConnection> mqttClientConnector = new List<MqttModelConnection>();
     string ConfigFilePath;
 
     MqttModelConnection SelectedClient = new MqttModelConnection();
     MqttClientModel AddEditClient = new MqttClientModel();
+    MqttClientModel DeleteClient = new MqttClientModel();
     PublisherSubscriber SelectedSubscriber = new PublisherSubscriber();
     string SelectedMsgType = "All";
 
@@ -583,10 +576,10 @@
 
     private void LoadClients()
     {
-        string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-        if (File.Exists($@"{mainDir}\wwwroot\clientconfig.txt"))
+        string mainDir = MqttClientModel.MainDirPath;
+        if (File.Exists($@"{mainDir}//wwwroot//clientconfig.txt"))
         {
-            var path = File.ReadAllText($@"{mainDir}\wwwroot\clientconfig.txt");
+            var path = File.ReadAllText($@"{mainDir}//wwwroot//clientconfig.txt");
             if (File.Exists(path))
             {
                 ConfigFilePath = path;
@@ -595,17 +588,17 @@
             }
             else
             {
-                ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
+                ConfigFilePath = $@"{mainDir}//wwwroot//client.json";
                 var data = File.ReadAllText(ConfigFilePath);
                 MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
             }
         }
         else
         {
-            ConfigFilePath = $@"{mainDir}\wwwroot\client.json";
-            if (File.Exists($@"{mainDir}\wwwroot\client.json"))
+            ConfigFilePath = $@"{mainDir}//wwwroot//client.json";
+            if (File.Exists($@"{mainDir}//wwwroot//client.json"))
             {
-                var data = File.ReadAllText($@"{mainDir}\wwwroot\client.json");
+                var data = File.ReadAllText($@"{mainDir}//wwwroot//client.json");
                 MqttClientModel.mqttClients = JsonConvert.DeserializeObject<List<MqttClientModel>>(data);
                 //mqttClientModels = MqttClientModel.mqttClients;
             }
@@ -643,10 +636,12 @@
              //  && !ps.RecievedMessages.Contains(e.ApplicationMessage)
              ).ToList().
                   ForEach(ch => ch.RecievedMessages.Add(new RecievedMessage(e.ApplicationMessage, DateTime.Now, e.ApplicationMessage.QualityOfServiceLevel)));
+             File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
+
              await InvokeAsync(() =>
-             {
-                 StateHasChanged();
-             });
+    {
+        StateHasChanged();
+    });
          };
     }
 
@@ -689,12 +684,12 @@
                 PubType = mqttClientConnector[0].MqttClientModel.QosType;
                 SubType = mqttClientConnector[0].MqttClientModel.QosType;
             }
-            string mainDir = AppDomain.CurrentDomain.BaseDirectory;
-            string configpathsave = $@"{mainDir}\wwwroot\clientconfig.txt";
-            if (File.Exists(configpathsave))
-            {
-                File.Delete(configpathsave);
-            }
+            string mainDir = MqttClientModel.MainDirPath;
+            string configpathsave = $@"{mainDir}//wwwroot//clientconfig.txt";
+            //if (File.Exists(configpathsave))
+            //{
+            //    File.Delete(configpathsave);
+            //}
             File.WriteAllText(configpathsave, MqttClientModel.ConfigPath);
             StateHasChanged();
         }
@@ -713,20 +708,27 @@
         {
             string path = pickedFolder;
             string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-            File.WriteAllText($@"{path}\client.json", json);
+            File.WriteAllText($@"{path}//client.json", json);
         }
 
     }
 
-    private void Delete(MqttClientModel client)
+    private void DeleteModalOpen(MqttClientModel client){
+        IsDeleteClientOpen = true;
+        DeleteClient = client;
+        StateHasChanged();
+    }
+
+    private void DeleteSelectedClient(MqttClientModel client)
     {
+        
         MqttClientModel.mqttClients.Remove(client);
         mqttClientConnector = mqttClientConnector.Where(m => m.MqttClientModel != client).ToList();
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists(ConfigFilePath))
-        {
-            File.Delete(ConfigFilePath);
-        }
+        //if (File.Exists(ConfigFilePath))
+        //{
+        //    File.Delete(ConfigFilePath);
+        //}
         File.WriteAllText(ConfigFilePath, json);
         if (mqttClientConnector.Count > 0)
         {
@@ -735,6 +737,7 @@
             SubType = mqttClientConnector[0].MqttClientModel.QosType;
             InvokeAsync(StateHasChanged);
         }
+        IsDeleteClientOpen = false;
         StateHasChanged();
     }
     #region For Toggling Client
@@ -807,10 +810,10 @@
         ConnectToMqtt(AddEditClient);
         SelectedClient = mqttClientConnector.Where(r => r.MqttClientModel.ClientId == AddEditClient.ClientId).FirstOrDefault();
         string json = JsonConvert.SerializeObject(MqttClientModel.mqttClients);
-        if (File.Exists(MqttClientModel.ConfigPath))
-        {
-            File.Delete(MqttClientModel.ConfigPath);
-        }
+        //if (File.Exists(MqttClientModel.ConfigPath))
+        //{
+        //    File.Delete(MqttClientModel.ConfigPath);
+        //}
         File.WriteAllText(MqttClientModel.ConfigPath, json);
         IsClientOpen = false;
         StateHasChanged();
@@ -851,6 +854,7 @@
     {
         IsSubOpen = false;
         IsClientOpen = false;
+        IsDeleteClientOpen = false;
     }
 
     private void AddPublisher()
@@ -868,6 +872,7 @@
                     PublisherSubscriber.PublisherSubscribers.Add(new PublisherSubscriber { Id = PublisherSubscriber.PublisherSubscribers.Count + 1, TopicName = pubtopicName, ClientId = SelectedClient.MqttClientModel.ClientId, topicType = TopicType.Publisher, SentMessages = new List<SentMessage>() { new SentMessage(pubMsg, DateTime.Now, PubType) } });
                 }
                 SelectedClient.MqttConnector.PublishTopic(pubtopicName, pubMsg, PubType);
+                File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
             }
         }
         StateHasChanged();
@@ -886,6 +891,8 @@
                 PublisherSubscriber.PublisherSubscribers.Where(t => t.TopicName == subtopicName && t.topicType == TopicType.Subscriber && t.ClientId == SelectedClient.MqttClientModel.ClientId).ToList().ForEach(ch => ch.QosType = SubType);
             }
             SelectedClient.MqttConnector.Subscribe(subtopicName, SubType);
+            File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
+
             IsSubOpen = false;
         }
 
@@ -944,6 +951,7 @@
     private void DeleteSub(PublisherSubscriber subscriber)
     {
         PublisherSubscriber.PublisherSubscribers.Remove(subscriber);
+        File.WriteAllText($"{MqttClientModel.MainDirPath}//wwwroot//PubSubclient.json", JsonConvert.SerializeObject(PublisherSubscriber.PublisherSubscribers));
         StateHasChanged();
     }
 
