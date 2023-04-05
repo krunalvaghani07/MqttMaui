@@ -17,9 +17,6 @@ build:
     - apt-get update && apt-get install -y dotnet-sdk-6.0
     - dotnet tool install -g Microsoft.Maui.Check
 
-    # Restore NuGet packages
-    - dotnet restore
-
     # Install MAUI workload
     - dotnet workload install maui
 
