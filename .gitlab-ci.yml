@@ -8,15 +8,6 @@ build:
     - exists:
         - main
   script:
-    - apt-get update && apt-get install -y gnupg
-    - curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o microsoft.asc.gpg
-    - gpg --batch --yes --delete-keys microsoft.asc
-    - mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
-    - echo "deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.asc.gpg] https://packages.microsoft.com/repos/microsoft-debian-gpg-repo stable main" > /etc/apt/sources.list.d/microsoft.list
-    - apt-get update && apt-get install -y apt-transport-https
-    - apt-get update && apt-get install -y dotnet-sdk-6.0
-    - dotnet tool install -g Microsoft.Maui.Check
-
     # Install MAUI workload
     - dotnet workload install maui
 
